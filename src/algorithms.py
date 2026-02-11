@@ -3,15 +3,55 @@ from typing import Callable
 from functools import reduce
 from random import randint
 
-def _SNR(u: User) -> int:
-    return randint(0, u.avgSNR*2)
 
-def maxSNR(users: list[User]) -> tuple[User, int]:
-    def _maxSNR(acc :tuple[User, int], e: User)-> tuple[User, int]:
-        return acc if max(acc[1], _SNR(e)) == acc[1] else (e, _SNR(e))
+def _snr(user: User) -> int:
+    """
+    Generates a random instantaneous SNR value for a given user.
+
+    The SNR is randomly selected between 0 and twice the user's
+    average SNR.
+
+    Args:
+        user: The user for whom the SNR is generated.
+
+    Returns:
+        A simulated instantaneous SNR value.
+    """
+    return randint(0, user.avgSNR * 2)
+
+
+def max_snr(users: list[User]) -> tuple[User, int]:
+    """
+    Selects the user with the highest instantaneous SNR.
+
+    Args:
+        users: List of candidate users.
+
+    Returns:
+        A tuple containing:
+            - The selected user with the highest SNR.
+            - The corresponding SNR value.
+
+    Notes:
+        If the user list is empty, a dummy user with SNR -1
+        is returned.
+    """
+
+    def _select_max(
+        acc: tuple[User, int], user: User
+    ) -> tuple[User, int]:
+        """
+        Compares the current best user (accumulator) with a new user
+        and returns the one with the higher SNR.
+        """
+        snr = _snr(user)
+        return acc if acc[1] >= snr else (user, snr)
+
     dummy = User(-1, -1)
-    return reduce(_maxSNR, users, (dummy, -1))
+    return reduce(_select_max, users, (dummy, -1))
 
+
+#: Dictionary mapping algorithm names to their implementation.
 algos: dict[str, Callable[[list[User]], tuple[User, int]]] = {
-    "MaxSNR" : maxSNR
+    "MaxSNR": max_snr,
 }
