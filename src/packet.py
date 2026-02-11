@@ -64,3 +64,5 @@ class PacketGenerator:
             for _ in range(n):
                 if random.random() < self.CHANCE_TO_GENERATE_PACKET:
                     users[user].push(self._generatePackets(t))
+        return [Packet(self.packetSize) for _ in range(numPackets)]
+
