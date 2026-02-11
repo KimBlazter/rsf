@@ -1,5 +1,6 @@
 from buffer import Buffer
 from packet import Packet, PacketGenerator
+import sys
 
 class User:
     def __init__(self, id, avgSNR):
@@ -9,3 +10,5 @@ class User:
 
     def consume_packet(self, packet):
         self.buffer.pop(packet)  # Consume the packet from the buffer
+
+DUMMY_USER = User(-1, sys.maxsize)
