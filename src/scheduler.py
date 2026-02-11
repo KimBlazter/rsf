@@ -1,4 +1,4 @@
-from user import User
+from user import User, DUMMY_USER
 from algorithms import algos
 
 BITS_PER_SNR_POINT = 4
@@ -55,7 +55,10 @@ class Scheduler():
                         corresponding allocated bits.
         """
         for user, bits in repartition:
-            user.receive(bits) # give bits to user
+            if user is DUMMY_USER or bits == -1:
+                # sample missed UR for stats reasons
+                continue
+            user.allocates_bits(bits) # give bits to user
         pass
 
     def select_user(self, users: list[User]) -> tuple[User, int] :
