@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import random
 from buffer import Buffer
+from user import User
 
 
 @dataclass
@@ -47,22 +48,22 @@ class PacketGenerator:
         Returns:
             List of generated packets.
         """
+        # TODO add mitigation (generate base on chances eg: 80%)
         numPackets = int(self.cbr / self.packetSize)
         return [Packet(self.packetSize, timestamp=t) for _ in range(numPackets)]
 
-    def generateUsersPackets(self, users: dict[int, Buffer], t: int, n: int) -> None:
+    def generateUsersPackets(self, users: list[User], t: int) -> None:
         """Generates packets for all users at a given timestamp.
 
         For each user, performs n generation attempts based on the
         CHANCE_TO_GENERATE_PACKET probability.
 
         Args:
+            users: List of users receiving packets
             t: Current timestamp.
-            n: Number of generation attempts per user.
         """
-        for user in users.keys():
-            for _ in range(n):
-                if random.random() < self.CHANCE_TO_GENERATE_PACKET:
-                    users[user].push(self._generatePackets(t))
-        return [Packet(self.packetSize) for _ in range(numPackets)]
+        # FIXME
+        for user in users:
+            if random.random() < self.CHANCE_TO_GENERATE_PACKET:
+                user.add_packets(self._generatePackets(t))
 
