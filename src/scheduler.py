@@ -58,7 +58,7 @@ class Scheduler():
             if user is DUMMY_USER or bits == -1:
                 # sample missed UR for stats reasons
                 continue
-            user.allocates_bits(bits) # give bits to user
+            user.allocate_bits(bits) # give bits to user
         pass
 
     def select_user(self, users: list[User]) -> tuple[User, int] :
