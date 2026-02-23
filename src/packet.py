@@ -1,7 +1,9 @@
-from dataclasses import dataclass
 import random
-from buffer import Buffer
-from user import User
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from user import User
 
 
 @dataclass
@@ -52,7 +54,7 @@ class PacketGenerator:
         numPackets = int(self.cbr / self.packetSize)
         return [Packet(self.packetSize, timestamp=t) for _ in range(numPackets)]
 
-    def generateUsersPackets(self, users: list[User], t: int) -> None:
+    def generateUsersPackets(self, users: list["User"], t: int) -> None:
         """Generates packets for all users at a given timestamp.
 
         For each user, performs n generation attempts based on the
@@ -66,4 +68,3 @@ class PacketGenerator:
         for user in users:
             if random.random() < self.CHANCE_TO_GENERATE_PACKET:
                 user.add_packets(self._generatePackets(t))
-
