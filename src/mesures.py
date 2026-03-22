@@ -1,31 +1,16 @@
 import os
-from dataclasses import dataclass
-from random import randint, random
 
 from matplotlib import pyplot as plt
 
+# SNR moyen des utilisateurs proches (défini dans initialization.py)
+_PROCHE_AVG_SNR = 11
 
-@dataclass
-class Data:
-    delais_loin: list[float]
-    """Délai pour les paquets envoyés par les utilisateurs loin"""
-    delais_proche: list[float]
-    """Délai pour les paquets envoyés par les utilisateurs proches"""
-    ur_utilises: list[int]
-    """Nombre d'UR utilisées par UR"""
-    bits_par_ur: list[float]
-    """Nombre de bits utilisés par UR"""
-
-
-data = Data([], [], [], [])
-
-# Generate mock data
-paquets = 1000
-iterations = 100
-ur_total = 100
-data.delais_loin = [random() + 0.18 for _ in range(paquets)]
-data.delais_proche = [random() for _ in range(paquets)]
-data.ur_utilises = [randint(1, ur_total) for _ in range(iterations)]
+# Données collectées au fil de la simulation
+_ur_pct: list[float] = []  # %UR utilisées, une entrée par tick
+_delais_proche: list[float] = []  # délai par paquet (proche)
+_delais_loin: list[float] = []  # délai par paquet (loin)
+_bits_proche: list[int] = []  # bits par UR (proche)
+_bits_loin: list[int] = []  # bits par UR (loin)
 
 # # Mesures à prendre
 # > Pour chaque, faire de moyennes pour les utilisateurs loin / proches
@@ -40,56 +25,113 @@ data.ur_utilises = [randint(1, ur_total) for _ in range(iterations)]
 #######################################################
 
 
-def nb_ur_used(n: int) -> None:
-    """ """
-    data.ur_utilises.append(n)
+def record_ur_usage(ur_used: int, total_ur: int) -> None:
+    """Enregistre le taux d'utilisation des UR pour un tick.
+
+    Appelée une fois par tick depuis le scheduler.
+
+    Args:
+        ur_used: nombre d'UR effectivement allouées (hors DUMMY_USER)
+        total_ur: nombre total d'UR disponibles (640)
+    """
+    _ur_pct.append((ur_used / total_ur) * 100)
 
 
-def prise2() -> None:
-    """ """
-    return
+def record_delay(delay: float, avg_snr: int) -> None:
+    """Enregistre le délai d'un paquet transmis.
+
+    Appelée une fois par paquet transmis depuis buffer.pop().
+
+    Args:
+        delay: délai du paquet (tick courant - timestamp de création)
+        avg_snr: SNR moyen de l'utilisateur (pour distinguer proche/loin)
+    """
+    if avg_snr == _PROCHE_AVG_SNR:
+        _delais_proche.append(delay)
+    else:
+        _delais_loin.append(delay)
 
 
-def prise3() -> None:
-    """ """
-    return
+def record_bits(bits: int, avg_snr: int) -> None:
+    """Enregistre les bits transmis pour une allocation d'UR.
+
+    Appelée une fois par UR allouée depuis scheduler.apply_repartition().
+
+    Args:
+        bits: bits effectivement transmis sur cette UR
+        avg_snr: SNR moyen de l'utilisateur (pour distinguer proche/loin)
+    """
+    if avg_snr == _PROCHE_AVG_SNR:
+        _bits_proche.append(bits)
+    else:
+        _bits_loin.append(bits)
 
 
 #######################################################
-#######################################################
+## Génération des graphiques
 #######################################################
 
 
 def generate_plots() -> None:
-    """
-    Genère les graphiques à partir des données collectées dans `data`
-    """
+    """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
 
     output_dir = "mesures"
-
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    plt.plot(data.delais_loin)
-    plt.xlabel("Paquet")
-    plt.ylabel("Délai (s)")
-    plt.savefig(f"{output_dir}/loin.png")
-    plt.close()
-
-    plt.plot(data.delais_proche)
-    plt.xlabel("Paquet")
-    plt.ylabel("Délai (s)")
-    plt.savefig(f"{output_dir}/proche.png")
-    plt.close()
-
-    plt.plot([(d / ur_total) * 100 for d in data.ur_utilises])
-    plt.xlabel("Itération")
+    # 1. %UR utilisées par tick
+    plt.figure()
+    plt.plot(_ur_pct)
+    plt.xlabel("Tick")
     plt.ylabel("% d'UR utilisées")
-    plt.savefig(f"{output_dir}/ur.png")
+    plt.title("Taux d'utilisation des UR par tick")
+    plt.savefig(f"{output_dir}/ur_usage.png")
     plt.close()
 
-    return
+    # 2. Délai par paquet (proche vs loin)
+    plt.figure()
+    if _delais_proche:
+        plt.plot(_delais_proche, label="Proche", alpha=0.7)
+    if _delais_loin:
+        plt.plot(_delais_loin, label="Loin", alpha=0.7)
+    plt.xlabel("Paquet")
+    plt.ylabel("Délai (ticks)")
+    plt.title("Délai par paquet")
+    plt.legend()
+    plt.savefig(f"{output_dir}/delai.png")
+    plt.close()
+
+    # 3. Bits par UR (proche vs loin)
+    plt.figure()
+    if _bits_proche:
+        plt.plot(_bits_proche, label="Proche", alpha=0.7)
+    if _bits_loin:
+        plt.plot(_bits_loin, label="Loin", alpha=0.7)
+    plt.xlabel("UR")
+    plt.ylabel("Bits")
+    plt.title("Bits par UR")
+    plt.legend()
+    plt.savefig(f"{output_dir}/bits_par_ur.png")
+    plt.close()
+
+    # Moyennes
+    if _delais_proche:
+        print(
+            f"  Délai moyen proche: {sum(_delais_proche) / len(_delais_proche):.2f} ticks"
+        )
+    if _delais_loin:
+        print(
+            f"  Délai moyen loin:   {sum(_delais_loin) / len(_delais_loin):.2f} ticks"
+        )
+    if _bits_proche:
+        print(f"  Bits/UR moyen proche: {sum(_bits_proche) / len(_bits_proche):.2f}")
+    if _bits_loin:
+        print(f"  Bits/UR moyen loin:   {sum(_bits_loin) / len(_bits_loin):.2f}")
+    if _ur_pct:
+        print(f"  %UR moyen:            {sum(_ur_pct) / len(_ur_pct):.2f}%")
+
+    print("Graphiques sauvegardés dans", output_dir)
 
 
 if __name__ == "__main__":
