@@ -3,7 +3,7 @@ import argparse
 from argparser import parse_users_list, parse_users_mult, parse_users_range
 
 from initialization import init
-from mesures import finalise_round, initialise, record_ur_usage, generate_plots, generate_final_plot
+from mesures import _process_delay, finalise_round, record_ur_usage, generate_plots, generate_final_plot
 from packet import PacketGenerator
 from scheduler import Scheduler
 from user import DUMMY_USER, User
@@ -11,7 +11,7 @@ from user import DUMMY_USER, User
 def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
     if isinstance(nb_users, int):
         simulate(0, max_ticks, nb_users, algorithm)
-        return;
+        return
         
     print(f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users...")
     for sid, nb_usr in enumerate(nb_users):
@@ -25,8 +25,6 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
 
 def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None:
     print(f"\tInitializing simulation #{sim_id}")
-
-    initialise(max_ticks)
 
     users: list[User] = init(nb_users)
 
@@ -49,8 +47,12 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
 
         miss = scheduler.apply_repartition(updates, tick) # Vider les paquets utilisés
         
-        # record mesures
+        # record UR missrate
         record_ur_usage(scheduler.MAX_UR - miss, len(updates))
+
+        # record delay
+        _process_delay(users, tick)
+
         tick += 1
     print(f"\tSimulation #{sim_id} successfully ended !")
     generate_plots(sim_id)

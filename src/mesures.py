@@ -2,13 +2,16 @@ import os
 
 import numpy as np
 from matplotlib import pyplot as plt
+from typing import TYPE_CHECKING
 
-from constant import PROCHE_AVG_SNR
+from constant import LOIN_AVG_SNR, PROCHE_AVG_SNR
+if TYPE_CHECKING:
+    from user import User
 
 # Données collectées au fil de la simulation
 _ur_pct: list[float] = []  # %UR utilisées, une entrée par tick
-_delais_proche: list[list[float]] = []  # délai par paquet (proche)
-_delais_loin: list[list[float]] = []  # délai par paquet (loin)
+_delais_proche: list[float] = []  # délai par paquet (proche)
+_delais_loin: list[float] = []  # délai par paquet (loin)
 _bits_proche: list[int] = []  # bits par UR (proche)
 _bits_loin: list[int] = []  # bits par UR (loin)
 _bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateurs)
@@ -19,13 +22,6 @@ _bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateur
 # - %UR => pas toutes les UR ne sont utilisées à chaque itération
 # - Délai moyen => enregistrer les délais pour chaque paquet (timestamp arrivée - timestamp départ)
 # - bits/UR
-
-
-def initialise(max_ticks: int):
-    global _delais_proche
-    global _delais_loin
-    _delais_proche = [[] for _ in range(max_ticks)]
-    _delais_loin = [[] for _ in range(max_ticks)]
 
 
 #######################################################
@@ -44,6 +40,17 @@ def record_ur_usage(ur_used: int, total_ur: int) -> None:
     """
     _ur_pct.append((ur_used / total_ur) * 100)
 
+def _process_delay(users: list[User], curr_tick: int) -> None:
+    sum_proche = 0
+    sum_loin = 0
+    for u in users:
+        for p in u.buffer.queue:
+            if u.avgSNR == PROCHE_AVG_SNR:
+                sum_proche += curr_tick - p.timestamp
+            else:
+                sum_loin += curr_tick - p.timestamp
+    record_delay(sum_proche/len(users), PROCHE_AVG_SNR, curr_tick)
+    record_delay(sum_loin/len(users), LOIN_AVG_SNR, curr_tick)
 
 def record_delay(delay: float, avg_snr: int, curr_tick: int) -> None:
     """Enregistre le délai d'un paquet transmis.
@@ -55,9 +62,9 @@ def record_delay(delay: float, avg_snr: int, curr_tick: int) -> None:
         avg_snr: SNR moyen de l'utilisateur (pour distinguer proche/loin)
     """
     if avg_snr == PROCHE_AVG_SNR:
-        _delais_proche[curr_tick].append(delay)
+        _delais_proche.append(delay)
     else:
-        _delais_loin[curr_tick].append(delay)
+        _delais_loin.append(delay)
 
 
 def record_bits(bits: int, avg_snr: int) -> None:
@@ -104,6 +111,9 @@ def finalise_round(n_users: int) -> None:
 def generate_plots(sim_id: int) -> None:
     """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
+    print(f"Proche len {_delais_proche}")
+    print(f"Loin len {_delais_loin}")
+
 
     output_dir = f"mesures/sim-{sim_id}"
     if not os.path.exists(output_dir):
@@ -123,7 +133,7 @@ def generate_plots(sim_id: int) -> None:
     plt.plot([np.average(i) for i in _delais_proche], label="Proche", alpha=0.7)
     plt.plot([np.average(i) for i in _delais_loin], label="Loin", alpha=0.7)
     plt.xlabel("Temps (Tick)")
-    plt.ylabel("Délai moyen")
+    plt.ylabel("Délai moyen (par user)")
     plt.title("Délai moyen par tick")
     plt.legend()
     plt.savefig(f"{output_dir}/delai.png")

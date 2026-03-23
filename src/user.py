@@ -19,9 +19,7 @@ class User:
             self._add_packet(p)
     
     def allocate_bits(self, bits: int, curr_tick: int) -> None:
-        _ , delay, nb_packets = self.buffer.pop(bits, curr_tick)
+        self.buffer.pop(bits, curr_tick)
         record_bits(bits, self.avgSNR)
-        for _ in range(nb_packets):
-            record_delay(delay/nb_packets, self.avgSNR, curr_tick)
 
 DUMMY_USER = User(-1, sys.maxsize)
