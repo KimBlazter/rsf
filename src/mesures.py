@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 from matplotlib import pyplot as plt
 from constant import PROCHE_AVG_SNR
 
@@ -124,15 +125,19 @@ def generate_plots(sim_id: int) -> None:
     plt.savefig(f"{output_dir}/delai.png")
     plt.close()
 
-    # Bits par UR (proche vs loin)
+    # CDF des bits par UR (proche vs loin)
     plt.figure()
     if _bits_proche:
-        plt.plot(_bits_proche, label="Proche", alpha=0.7)
+        sorted_proche = np.sort(_bits_proche)
+        cdf_proche = np.arange(1, len(sorted_proche) + 1) / len(sorted_proche)
+        plt.plot(sorted_proche, cdf_proche, label="Proche", alpha=0.7)
     if _bits_loin:
-        plt.plot(_bits_loin, label="Loin", alpha=0.7)
-    plt.xlabel("UR")
-    plt.ylabel("Bits")
-    plt.title("Bits par UR")
+        sorted_loin = np.sort(_bits_loin)
+        cdf_loin = np.arange(1, len(sorted_loin) + 1) / len(sorted_loin)
+        plt.plot(sorted_loin, cdf_loin, label="Loin", alpha=0.7)
+    plt.xlabel("Bits par UR")
+    plt.ylabel("CDF")
+    plt.title("CDF des bits par UR")
     plt.legend()
     plt.savefig(f"{output_dir}/bits_par_ur.png")
     plt.close()
