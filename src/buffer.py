@@ -1,4 +1,5 @@
 from collections import deque
+from packet import Packet
 
 class Buffer:
     
@@ -13,15 +14,15 @@ class Buffer:
     
     
     
-    def __init__(self, max_size_bits):
-        self.queue = deque()
-        self.max_size = max_size_bits
-        self.current_size = 0 
-        self.dropped_packets = 0 # Compteur de paquets perdus car le buffer était plein (tail-drop)
+    def __init__(self, max_size_bits: int):
+        self.queue: deque[Packet] = deque()
+        self.max_size: int = max_size_bits
+        self.current_size: int = 0
+        self.dropped_packets: int = 0 # Compteur de paquets perdus car le buffer était plein (tail-drop)
 
 
 
-    def push(self, packet):
+    def push(self, packet: Packet) -> None:
         """
         Étape "remplir les buffers" : tente d'ajouter un paquet dans la file.
         Si l'espace restant est suffisant, le paquet entre.
