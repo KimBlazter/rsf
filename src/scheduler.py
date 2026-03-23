@@ -1,7 +1,7 @@
 from user import User, DUMMY_USER
 from algorithms import algos
 
-BITS_PER_SNR_POINT = 4
+BITS_PER_SNR_POINT = 10
 
 class Scheduler():
     """
@@ -45,7 +45,7 @@ class Scheduler():
             scheduled.append((best_user, snr * BITS_PER_SNR_POINT))
         return scheduled
     
-    def apply_repartition(self, repartition: list[tuple[User, int]]) -> None:
+    def apply_repartition(self, repartition: list[tuple[User, int]], curr_tick: int) -> None:
         """
         Applies the computed repartition by delivering the allocated
         bits to each scheduled user.
@@ -58,8 +58,7 @@ class Scheduler():
             if user is DUMMY_USER or bits == -1:
                 # sample missed UR for stats reasons
                 continue
-            user.allocate_bits(bits) # give bits to user
-        pass
+            user.allocate_bits(bits, curr_tick) # give bits to user
 
     def select_user(self, users: list[User]) -> tuple[User, int] :
         """

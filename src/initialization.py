@@ -1,10 +1,7 @@
 import math
 
+from constant import LOIN_AVG_SNR, PROCHE_AVG_SNR
 from user import User
-
-PROCHE_AVG_SNR = 11
-LOIN_AVG_SNR = 7
-
 
 def init(n: int):
     users = []
