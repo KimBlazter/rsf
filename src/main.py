@@ -8,19 +8,19 @@ from packet import PacketGenerator
 from scheduler import Scheduler
 from user import DUMMY_USER, User
 
-def main(max_ticks: int, nb_users: int | list[int], algorithm: str, num_simulations: int = 1):
-    if isinstance(nb_users, list) and num_simulations != len(nb_users):
-        raise Exception("Simulation number should match user numbers")
+def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
+    if isinstance(nb_users, int):
+        simulate(0, max_ticks, nb_users, algorithm)
+        return;
         
-    print(f"Running {num_simulations} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users...")
-    for sim_id in range(num_simulations):
+    print(f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users...")
+    for sid, nb_usr in enumerate(nb_users):
         print("\r")
-        nb_usr: int = nb_users[sim_id] if isinstance(nb_users, list) else nb_users
-        simulate(sim_id, max_ticks, nb_usr, algorithm)
+        simulate(sid, max_ticks, nb_usr, algorithm)
         finalise_round(nb_usr)
         
     generate_final_plot()
-    print(f"Successfully done {num_simulations} simulations!")
+    print(f"Successfully done {len(nb_users)} simulations!")
     
 
 def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None:
@@ -66,13 +66,11 @@ if __name__ == "__main__":
     group.add_argument("--users-range", type=parse_users_mult, help="User number list range (start:iterations:step)")
     group.add_argument("--users-mult", type=parse_users_range, help="User number list mult (start:iterations:multiplier)")
     
-    parser.add_argument("--runs", type=int, help="Number of simulations to run")
-    
     args = parser.parse_args()
     
     if args.users is not None:
-        main(args.max_ticks, args.users, args.algo, args.runs)
+        main(args.max_ticks, args.users, args.algo)
     else:
-        users_list = args.users_list or args.users_range or args.users_mult
-        main(args.max_ticks, users_list, args.algo, args.runs)
+        users_list: list[int] = args.users_list or args.users_range or args.users_mult
+        main(args.max_ticks, users_list, args.algo)
         
