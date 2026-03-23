@@ -41,7 +41,7 @@ class Buffer:
 
 
 
-    def pop(self, bits):
+    def pop(self, bits, current_tick):
         """
         Étape "vider les buffers schedulés" : retire des paquets de la file
         dans la limite du budget de bits alloué par le scheduler.
@@ -51,15 +51,18 @@ class Buffer:
         
         Args:
             bits: nombre de bits alloués par le scheduler pour cette itération
+            current_tick: tick courant de la simulation
             
         Returns:
-            tuple (transmitted, delay_sum) :
+            tuple (transmitted, delay_sum, sent_packets) :
                 - transmitted : nombre réel de bits transmis
-                - delay_sum   : somme des arrival_time des paquets transmis
-                                (utile pour calculer le délai moyen plus tard)
+                - delay_sum   : somme des délais des paquets transmis
+                                (delay = current_tick - timestamp)
+                - sent_packets: nombre de paquets transmis
         """
         transmitted = 0
         delay_sum = 0
+        sent_packets = 0
 
         while self.queue and transmitted < bits:
             # On regarde le premier paquet de la file (sans le retirer encore)
@@ -67,14 +70,15 @@ class Buffer:
             if transmitted + pkt.size <= bits:
                 # Le paquet tient dans le budget → on le transmet
                 transmitted += pkt.size
-                delay_sum += pkt.arrival_time
+                delay_sum += current_tick - pkt.timestamp
+                sent_packets += 1
                 # On retire le paquet de la file
                 self.queue.popleft()
                 self.current_size -= pkt.size
             else:
                 # Le prochain paquet est trop gros pour le budget restant → on arrête
                 break
-        return transmitted, delay_sum
+        return transmitted, delay_sum, sent_packets
 
 
 
