@@ -1,8 +1,7 @@
 import os
 
 from matplotlib import pyplot as plt
-
-from initialization import PROCHE_AVG_SNR
+from constant import PROCHE_AVG_SNR
 
 # Données collectées au fil de la simulation
 _ur_pct: list[float] = []  # %UR utilisées, une entrée par tick
@@ -154,6 +153,7 @@ def generate_plots(sim_id: int) -> None:
     if _ur_pct:
         print(f"  %UR moyen:            {sum(_ur_pct) / len(_ur_pct):.2f}%")
 
+    print(f"DEBUG {max(_bits_proche)}")
     print("Graphiques sauvegardés dans", output_dir)
 
 
