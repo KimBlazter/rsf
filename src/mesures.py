@@ -2,8 +2,7 @@ import os
 
 from matplotlib import pyplot as plt
 
-# SNR moyen des utilisateurs proches (défini dans initialization.py)
-_PROCHE_AVG_SNR = 11
+from initialization import PROCHE_AVG_SNR
 
 # Données collectées au fil de la simulation
 _ur_pct: list[float] = []  # %UR utilisées, une entrée par tick
@@ -46,7 +45,7 @@ def record_delay(delay: float, avg_snr: int) -> None:
         delay: délai du paquet (tick courant - timestamp de création)
         avg_snr: SNR moyen de l'utilisateur (pour distinguer proche/loin)
     """
-    if avg_snr == _PROCHE_AVG_SNR:
+    if avg_snr == PROCHE_AVG_SNR:
         _delais_proche.append(delay)
     else:
         _delais_loin.append(delay)
@@ -61,7 +60,7 @@ def record_bits(bits: int, avg_snr: int) -> None:
         bits: bits effectivement transmis sur cette UR
         avg_snr: SNR moyen de l'utilisateur (pour distinguer proche/loin)
     """
-    if avg_snr == _PROCHE_AVG_SNR:
+    if avg_snr == PROCHE_AVG_SNR:
         _bits_proche.append(bits)
     else:
         _bits_loin.append(bits)
