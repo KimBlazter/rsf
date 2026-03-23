@@ -3,7 +3,7 @@ import argparse
 from argparser import parse_users_list, parse_users_mult, parse_users_range
 
 from initialization import init
-from mesures import record_ur_usage, generate_plots
+from mesures import finalise_round, record_ur_usage, generate_plots, generate_final_plot
 from packet import PacketGenerator
 from scheduler import Scheduler
 from user import DUMMY_USER, User
@@ -17,10 +17,9 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str, num_simulati
         print("\r")
         nb_usr: int = nb_users[sim_id] if isinstance(nb_users, list) else nb_users
         simulate(sim_id, max_ticks, nb_usr, algorithm)
-        # display_stats()
-        # finalise_round(nb_usr)
+        finalise_round(nb_usr)
         
-    # generate final plot
+    generate_final_plot()
     print(f"Successfully done {num_simulations} simulations!")
     
 
@@ -51,6 +50,7 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
         record_ur_usage(nb_used_ur, len(updates))
         tick += 1
     print(f"\tSimulation #{sim_id} successfully ended !")
+    generate_plots(sim_id)
     
 
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--users", type=int, help="Constant user count across simulations")
     group.add_argument("--users-list", type=parse_users_list, help="User number list (e.g. 2,3,5)")
-    group.add_argument("--users-range", type=parse_users_range, help="User number list range (start:iterations:step)")
+    group.add_argument("--users-range", type=parse_users_mult, help="User number list range (start:iterations:step)")
     group.add_argument("--users-mult", type=parse_users_range, help="User number list mult (start:iterations:multiplier)")
     
     parser.add_argument("--runs", type=int, help="Number of simulations to run")
