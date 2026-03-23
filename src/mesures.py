@@ -120,10 +120,8 @@ def generate_plots(sim_id: int) -> None:
 
     # Délai par paquet (proche vs loin)
     plt.figure()
-    if _delais_proche:
-        plt.plot([np.average(i) for i in _delais_proche], label="Proche", alpha=0.7)
-    if _delais_loin:
-        plt.plot([np.average(i) for i in _delais_proche], label="Loin", alpha=0.7)
+    plt.plot([np.average(i) for i in _delais_proche], label="Proche", alpha=0.7)
+    plt.plot([np.average(i) for i in _delais_loin], label="Loin", alpha=0.7)
     plt.xlabel("Temps (Tick)")
     plt.ylabel("Délai moyen")
     plt.title("Délai moyen par tick")
