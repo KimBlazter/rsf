@@ -135,4 +135,21 @@ def generate_plots() -> None:
 
 
 if __name__ == "__main__":
+    from random import randint, random
+
+    # Simuler 100 ticks
+    for tick in range(100):
+        # UR usage: entre 400 et 640 UR utilisées par tick
+        record_ur_usage(randint(400, 640), 640)
+
+        # Quelques paquets transmis par tick
+        for _ in range(randint(5, 20)):
+            # Proche (avgSNR=11): délai entre 0 et 5 ticks
+            record_delay(random() * 5, avg_snr=11)
+            record_bits(randint(20, 88), avg_snr=11)
+
+            # Loin (avgSNR=7): délai plus élevé, entre 2 et 10 ticks
+            record_delay(2 + random() * 8, avg_snr=7)
+            record_bits(randint(4, 56), avg_snr=7)
+
     generate_plots()
