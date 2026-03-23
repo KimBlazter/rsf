@@ -1,7 +1,8 @@
+import constant 
 from user import User, DUMMY_USER
 from algorithms import algos
 
-BITS_PER_SNR_POINT = 10
+
 
 class Scheduler():
     """
@@ -12,8 +13,7 @@ class Scheduler():
         MAX_UR: Maximum number of scheduling units per repartition cycle.
         algorithm: Name of the scheduling algorithm to use.
     """
-
-    MAX_UR = 640 # 128 * 5
+    MAX_UR = constant.MAX_UR
 
     def __init__(self, algorithm: str) -> None:
         """
@@ -42,10 +42,10 @@ class Scheduler():
         scheduled = []
         for _ in range(self.MAX_UR):
             best_user, snr = self.select_user(users)
-            scheduled.append((best_user, snr * BITS_PER_SNR_POINT))
+            scheduled.append((best_user, snr * constant.BITS_PER_SNR_POINT))
         return scheduled
     
-    def apply_repartition(self, repartition: list[tuple[User, int]], curr_tick: int) -> None:
+    def apply_repartition(self, repartition: list[tuple[User, int]], curr_tick: int) -> int:
         """
         Applies the computed repartition by delivering the allocated
         bits to each scheduled user.
@@ -54,11 +54,13 @@ class Scheduler():
             repartition: List of tuples containing users and their
                         corresponding allocated bits.
         """
+        miss = 0
         for user, bits in repartition:
             if user is DUMMY_USER or bits == -1:
-                # sample missed UR for stats reasons
+                miss += 1
                 continue
             user.allocate_bits(bits, curr_tick) # give bits to user
+        return miss
 
     def select_user(self, users: list[User]) -> tuple[User, int] :
         """
