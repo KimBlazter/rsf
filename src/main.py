@@ -3,7 +3,7 @@ import argparse
 from argparser import parse_users_list, parse_users_mult, parse_users_range
 
 from initialization import init
-from mesures import finalise_round, record_ur_usage, generate_plots, generate_final_plot
+from mesures import finalise_round, initialise, record_ur_usage, generate_plots, generate_final_plot
 from packet import PacketGenerator
 from scheduler import Scheduler
 from user import DUMMY_USER, User
@@ -26,6 +26,8 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
 def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None:
     print(f"\tInitializing simulation #{sim_id}")
 
+    initialise(max_ticks)
+
     users: list[User] = init(nb_users)
 
     packet_gen = PacketGenerator(
@@ -36,6 +38,8 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
     print("\tStarting simulation...")
     tick = 0
     while tick < max_ticks:
+        if (tick % 500 == 0):
+            print(f"Iteration {tick}...")
         packet_gen.generateUsersPackets(
             users, tick
         )  # Generate packets in each user's buffer
@@ -43,11 +47,10 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
             users
         )  # Donner les UR aux users
 
-        scheduler.apply_repartition(updates, tick) # Vider les paquets utilisés
+        miss = scheduler.apply_repartition(updates, tick) # Vider les paquets utilisés
         
         # record mesures
-        nb_used_ur = reduce(lambda acc, e: (acc+1) if e[0] != DUMMY_USER else acc, updates, 0)
-        record_ur_usage(nb_used_ur, len(updates))
+        record_ur_usage(scheduler.MAX_UR - miss, len(updates))
         tick += 1
     print(f"\tSimulation #{sim_id} successfully ended !")
     generate_plots(sim_id)
