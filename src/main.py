@@ -3,6 +3,7 @@ import concurrent.futures
 from itertools import repeat
 
 from argparser import parse_users_list, parse_users_mult, parse_users_range
+from constant import PACKET_SIZE
 from initialization import init
 from mesures import (
     finalise_round,
@@ -38,8 +39,8 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
     users: list[User] = init(nb_users)
 
     packet_gen = PacketGenerator(
-        1000, 50
-    )  # 1000 bits/tick max, 100 paquet size # Bits/ticks calculé selon notre objectif de crash
+        1000, PACKET_SIZE
+    )  # 1000 bits/tick max, 50 paquet size # Bits/ticks calculé selon notre objectif de crash
     scheduler = Scheduler(algorithm)
 
     print("\tStarting simulation...")
@@ -57,7 +58,7 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
         miss = scheduler.apply_repartition(updates, tick)  # Vider les paquets utilisés
 
         # record UR missrate
-        record_ur_usage(scheduler.MAX_UR - miss, len(updates))
+        record_ur_usage(scheduler.MAX_UR - miss, scheduler.MAX_UR)
 
         # record delay
         process_delay(users, tick)
