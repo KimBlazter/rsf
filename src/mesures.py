@@ -125,8 +125,8 @@ def finalise_round(n_users: int) -> None:
 def generate_plots(sim_id: int) -> None:
     """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
-    print(f"Proche len {_delais_proche}")
-    print(f"Loin len {_delais_loin}")
+    # print(f"Proche len {_delais_proche}")
+    # print(f"Loin len {_delais_loin}")
 
     output_dir = f"mesures/sim-{sim_id}"
     if not os.path.exists(output_dir):
