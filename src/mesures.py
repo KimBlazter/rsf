@@ -1,10 +1,11 @@
 import os
+from typing import TYPE_CHECKING
 
 import numpy as np
 from matplotlib import pyplot as plt
-from typing import TYPE_CHECKING
 
 from constant import LOIN_AVG_SNR, PROCHE_AVG_SNR
+
 if TYPE_CHECKING:
     from user import User
 
@@ -40,6 +41,7 @@ def record_ur_usage(ur_used: int, total_ur: int) -> None:
     """
     _ur_pct.append((ur_used / total_ur) * 100)
 
+
 def _process_delay(users: list[User], curr_tick: int) -> None:
     sum_proche = 0
     sum_loin = 0
@@ -49,8 +51,9 @@ def _process_delay(users: list[User], curr_tick: int) -> None:
                 sum_proche += curr_tick - p.timestamp
             else:
                 sum_loin += curr_tick - p.timestamp
-    record_delay(sum_proche/len(users), PROCHE_AVG_SNR, curr_tick)
-    record_delay(sum_loin/len(users), LOIN_AVG_SNR, curr_tick)
+    record_delay(sum_proche / len(users), PROCHE_AVG_SNR, curr_tick)
+    record_delay(sum_loin / len(users), LOIN_AVG_SNR, curr_tick)
+
 
 def record_delay(delay: float, avg_snr: int, curr_tick: int) -> None:
     """Enregistre le délai d'un paquet transmis.
@@ -101,6 +104,8 @@ def finalise_round(n_users: int) -> None:
     _ur_pct.clear()
     _bits_proche.clear()
     _bits_loin.clear()
+    _delais_proche.clear()
+    _delais_loin.clear()
 
 
 #######################################################
@@ -113,7 +118,6 @@ def generate_plots(sim_id: int) -> None:
     print("Génération des graphiques...")
     print(f"Proche len {_delais_proche}")
     print(f"Loin len {_delais_loin}")
-
 
     output_dir = f"mesures/sim-{sim_id}"
     if not os.path.exists(output_dir):
