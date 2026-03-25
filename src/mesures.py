@@ -53,16 +53,28 @@ def process_delay(users: list[User], curr_tick: int) -> None:
         users: la liste des utilisateurs
         curr_tick: le tick actuel de la simulation
     """
+    packet_c_loin = 0
+    packet_c_proche = 0
     sum_proche = 0
     sum_loin = 0
     for u in users:
         for p in u.buffer.queue:
             if u.avgSNR == PROCHE_AVG_SNR:
                 sum_proche += curr_tick - p.timestamp
+                packet_c_proche += 1
             else:
                 sum_loin += curr_tick - p.timestamp
-    record_delay(sum_proche / len(users), PROCHE_AVG_SNR, curr_tick)
-    record_delay(sum_loin / len(users), LOIN_AVG_SNR, curr_tick)
+                packet_c_loin += 1
+    record_delay(
+        sum_proche / packet_c_proche if packet_c_proche != 0 else 0,
+        PROCHE_AVG_SNR,
+        curr_tick
+    )
+    record_delay(
+        sum_loin / packet_c_loin if packet_c_loin != 0 else 0,
+        LOIN_AVG_SNR,
+        curr_tick
+    )
 
 
 def record_delay(delay: float, avg_snr: int, curr_tick: int) -> None:
