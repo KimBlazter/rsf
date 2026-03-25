@@ -1,5 +1,6 @@
 import argparse
 import concurrent.futures
+from time import perf_counter
 from itertools import repeat
 
 from argparser import parse_users_list, parse_users_mult, parse_users_range
@@ -17,9 +18,9 @@ from scheduler import Scheduler
 from user import User
 from algorithms import algos
 
-def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
+def main(max_ticks: int, nb_users: int | list[int], algorithm: str, measure_time: bool = False):
     if isinstance(nb_users, int):
-        simulate(0, max_ticks, nb_users, algorithm)
+        simulate(0, max_ticks, nb_users, algorithm, measure_time)
         return
 
     print(
@@ -35,8 +36,9 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
     print(f"Successfully done {len(nb_users)} simulations!")
 
 
-def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> tuple[tuple[float, int], tuple[float, int]]:
+def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str, measure_time: bool = False) -> tuple[tuple[float, int], tuple[float, int]]:
     print(f"\tInitializing simulation #{sim_id}")
+    start = perf_counter()
 
     users: list[User] = init(nb_users)
 
@@ -66,7 +68,9 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> tupl
         process_delay(users, tick)
 
         tick += 1
-    print(f"\tSimulation #{sim_id} successfully ended !")
+    end = perf_counter()
+    print(f"\tSimulation #{sim_id} successfully ended in {(end - start):0.2f}s !")
+    
     generate_plots(sim_id)
     return finalise_round(nb_users)
 
@@ -96,11 +100,14 @@ if __name__ == "__main__":
         type=parse_users_mult,
         help="User number list mult (start:iterations:multiplier)",
     )
+    
+    parser.add_argument("--time", action="store_true" ,help="Measure simulations time")
 
     args = parser.parse_args()
 
     if args.users is not None:
-        main(args.max_ticks, args.users, args.algo)
+        main(args.max_ticks, args.users, args.algo, measure_time=args.time)
     else:
         users_list: list[int] = args.users_list or args.users_range or args.users_mult
-        main(args.max_ticks, users_list, args.algo)
+        main(args.max_ticks, users_list, args.algo, measure_time=args.time)
+        
