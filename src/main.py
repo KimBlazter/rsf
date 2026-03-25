@@ -1,5 +1,7 @@
 from functools import reduce
+from itertools import repeat
 import argparse
+import concurrent.futures
 from argparser import parse_users_list, parse_users_mult, parse_users_range
 
 from initialization import init
@@ -7,6 +9,7 @@ from mesures import _process_delay, finalise_round, record_ur_usage, generate_pl
 from packet import PacketGenerator
 from scheduler import Scheduler
 from user import DUMMY_USER, User
+from algorithms import algos
 
 def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
     if isinstance(nb_users, int):
@@ -14,10 +17,13 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
         return
         
     print(f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users...")
-    for sid, nb_usr in enumerate(nb_users):
-        print("\r")
-        simulate(sid, max_ticks, nb_usr, algorithm)
-        finalise_round(nb_usr)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm))
+    # for sid, nb_usr in enumerate(nb_users):
+    #     print("\r")
+    #     simulate(sid, max_ticks, nb_usr, algorithm)
+    #     finalise_round(nb_usr)
+    
         
     generate_final_plot()
     print(f"Successfully done {len(nb_users)} simulations!")
@@ -56,6 +62,7 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
         tick += 1
     print(f"\tSimulation #{sim_id} successfully ended !")
     generate_plots(sim_id)
+    finalise_round(nb_users)
     
 
 
@@ -63,13 +70,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument("max_ticks", type=int, help="Max ticks per simulation")
-    parser.add_argument("algo", type=str, help="The algorithm to use. (RR, MaxSNR)")
+    parser.add_argument("algo", type=str, help="The algorithm to use.", choices=algos.keys())
     
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--users", type=int, help="Constant user count across simulations")
     group.add_argument("--users-list", type=parse_users_list, help="User number list (e.g. 2,3,5)")
-    group.add_argument("--users-range", type=parse_users_mult, help="User number list range (start:iterations:step)")
-    group.add_argument("--users-mult", type=parse_users_range, help="User number list mult (start:iterations:multiplier)")
+    group.add_argument("--users-range", type=parse_users_range, help="User number list range (start:iterations:step)")
+    group.add_argument("--users-mult", type=parse_users_mult, help="User number list mult (start:iterations:multiplier)")
     
     args = parser.parse_args()
     
