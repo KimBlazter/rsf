@@ -27,7 +27,7 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str, measure_time
         f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users..."
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        results = list(executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm)))
+        results = list(executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm), repeat(measure_time)))
 
     bits_ur_by_user = [bits_entry for bits_entry, _ in results]
     ur_pct_by_user = [ur_entry for _, ur_entry in results]
