@@ -1,5 +1,4 @@
 from buffer import Buffer
-from constant import BUFFER_SIZE
 from packet import Packet
 import sys
 from mesures import record_bits, record_delay
@@ -7,7 +6,7 @@ from mesures import record_bits, record_delay
 class User:
     def __init__(self, id, avgSNR):
         self.id = id
-        self.buffer:Buffer = Buffer(BUFFER_SIZE)  # Initialize with a buffer of 1000 bits
+        self.buffer:Buffer = Buffer()  # Initialize with a buffer of 1000 bits
         self.avgSNR = avgSNR
 
     def _add_packet(self, packet: Packet) -> None:

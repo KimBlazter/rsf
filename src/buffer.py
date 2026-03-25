@@ -14,11 +14,9 @@ class Buffer:
     
     
     
-    def __init__(self, max_size_bits: int):
+    def __init__(self):
         self.queue: deque[Packet] = deque()
-        self.max_size: int = max_size_bits
         self.current_size: int = 0
-        self.dropped_packets: int = 0 # Compteur de paquets perdus car le buffer était plein (tail-drop)
 
 
 
@@ -31,13 +29,9 @@ class Buffer:
         Args:
             packet: objet avec attribut .size (taille en bits)
         """
-        if self.current_size + packet.size <= self.max_size:
-            # Il reste assez de place → on ajoute le paquet en bout de file
-            self.queue.append(packet)
-            self.current_size += packet.size
-        else:
-            # Buffer plein → le paquet est perdu
-            self.dropped_packets += 1
+        self.queue.append(packet)
+        self.current_size += packet.size
+    
 
 
 
