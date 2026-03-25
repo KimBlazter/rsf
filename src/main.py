@@ -43,7 +43,7 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
     tick = 0
     while tick < max_ticks:
         if (tick % 500 == 0):
-            print(f"Iteration {tick}...")
+            print(f"(#{sim_id}) Iteration {tick}...")
         packet_gen.generateUsersPackets(
             users, tick
         )  # Generate packets in each user's buffer
