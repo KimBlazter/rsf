@@ -43,6 +43,15 @@ def record_ur_usage(ur_used: int, total_ur: int) -> None:
 
 
 def _process_delay(users: list[User], curr_tick: int) -> None:
+    """Met en forme les delais depuis une liste d'utilisateurs
+        et les enregistre.
+
+    Appelée une fois par tick.
+
+    Args:
+        users: la liste des utilisateurs
+        curr_tick: le tick actuel de la simaltion
+    """
     sum_proche = 0
     sum_loin = 0
     for u in users:
@@ -116,8 +125,8 @@ def finalise_round(n_users: int) -> None:
 def generate_plots(sim_id: int) -> None:
     """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
-    print(f"Proche len {_delais_proche}")
-    print(f"Loin len {_delais_loin}")
+    # print(f"Proche len {_delais_proche}")
+    # print(f"Loin len {_delais_loin}")
 
     output_dir = f"mesures/sim-{sim_id}"
     if not os.path.exists(output_dir):
