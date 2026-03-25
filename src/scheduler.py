@@ -39,10 +39,15 @@ class Scheduler():
                 - The selected user.
                 - The number of allocated bits.
         """
+        selected_user = [u for u in users if u.buffer.current_size]
         scheduled = []
         for _ in range(self.MAX_UR):
-            best_user, snr = self.select_user(users)
+            best_user, snr = self.select_user(selected_user)
             scheduled.append((best_user, snr * constant.BITS_PER_SNR_POINT))
+
+            # remove for selected_user if necessary
+            if (best_user.buffer.current_size - snr * constant.BITS_PER_SNR_POINT <= 0):
+                selected_user.remove(best_user)
         return scheduled
     
     def apply_repartition(self, repartition: list[tuple[User, int]], curr_tick: int) -> int:

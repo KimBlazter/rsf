@@ -66,6 +66,8 @@ def rr(users: list[User]) -> tuple[User, int]:
         If the user list is empty, a dummy user with SNR -1
         is returned.
     """
+    if users == []:
+        return (DUMMY_USER, -1)
     selected = choice(users)
     return (selected, _snr(selected)) if selected is not None else (DUMMY_USER, -1)
 
