@@ -16,6 +16,7 @@ _delais_loin: list[float] = []  # délai par paquet (loin)
 _bits_proche: list[int] = []  # bits par UR (proche)
 _bits_loin: list[int] = []  # bits par UR (loin)
 _bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateurs)
+_ur_pct_by_user: list[tuple[float, int]] = []  # (%UR moyen, nb utilisateurs)
 
 # # Mesures à prendre
 # > Pour chaque, faire de moyennes pour les utilisateurs loin / proches
@@ -42,7 +43,7 @@ def record_ur_usage(ur_used: int, total_ur: int) -> None:
     _ur_pct.append((ur_used / total_ur) * 100)
 
 
-def _process_delay(users: list[User], curr_tick: int) -> None:
+def process_delay(users: list[User], curr_tick: int) -> None:
     """Met en forme les delais depuis une liste d'utilisateurs
         et les enregistre.
 
@@ -50,7 +51,7 @@ def _process_delay(users: list[User], curr_tick: int) -> None:
 
     Args:
         users: la liste des utilisateurs
-        curr_tick: le tick actuel de la simaltion
+        curr_tick: le tick actuel de la simulation
     """
     sum_proche = 0
     sum_loin = 0
@@ -105,9 +106,11 @@ def finalise_round(n_users: int) -> None:
     # Calcul bits par UR moyen
     bits_per_ur = _bits_proche + _bits_loin
 
-    avg = sum(bits_per_ur) / len(bits_per_ur)
+    avg_bits = sum(bits_per_ur) / len(bits_per_ur)
+    _bits_ur_by_user.append((avg_bits, n_users))
 
-    _bits_ur_by_user.append((avg, n_users))
+    avg_ur_usage = sum(_ur_pct) / len(_ur_pct)
+    _ur_pct_by_user.append((avg_ur_usage, n_users))
 
     # clear values for next round
     _ur_pct.clear()
@@ -125,8 +128,6 @@ def finalise_round(n_users: int) -> None:
 def generate_plots(sim_id: int) -> None:
     """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
-    # print(f"Proche len {_delais_proche}")
-    # print(f"Loin len {_delais_loin}")
 
     output_dir = f"mesures/sim-{sim_id}"
     if not os.path.exists(output_dir):
@@ -187,6 +188,17 @@ def generate_final_plot() -> None:
     plt.ylabel("Bits/UR moyen")
     plt.title("Bits par UR en fonction du nombre d'utilisateurs")
     plt.savefig(f"{output_dir}/bits_ur_by_user.png")
+    plt.close()
+
+    nb_users = [entry[1] for entry in _ur_pct_by_user]
+    avg_ur_usage = [entry[0] for entry in _ur_pct_by_user]
+
+    plt.figure()
+    plt.plot(nb_users, avg_ur_usage, marker="o")
+    plt.xlabel("Nombre d'utilisateurs")
+    plt.ylabel("Pourcentage d'UR utilisées")
+    plt.title("Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs")
+    plt.savefig(f"{output_dir}/ur_usage_by_user.png")
     plt.close()
 
     print(f"Graphique final sauvegardé dans {output_dir}/bits_ur_by_user.png")

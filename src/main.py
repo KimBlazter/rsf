@@ -1,33 +1,36 @@
-from functools import reduce
-from itertools import repeat
 import argparse
 import concurrent.futures
-from argparser import parse_users_list, parse_users_mult, parse_users_range
+from itertools import repeat
 
+from argparser import parse_users_list, parse_users_mult, parse_users_range
 from initialization import init
-from mesures import _process_delay, finalise_round, record_ur_usage, generate_plots, generate_final_plot
+from mesures import (
+    finalise_round,
+    generate_final_plot,
+    generate_plots,
+    process_delay,
+    record_ur_usage,
+)
 from packet import PacketGenerator
 from scheduler import Scheduler
-from user import DUMMY_USER, User
+from user import User
 from algorithms import algos
 
 def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
     if isinstance(nb_users, int):
         simulate(0, max_ticks, nb_users, algorithm)
         return
-        
-    print(f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users...")
+
+    print(
+        f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users..."
+    )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm))
-    # for sid, nb_usr in enumerate(nb_users):
-    #     print("\r")
-    #     simulate(sid, max_ticks, nb_usr, algorithm)
-    #     finalise_round(nb_usr)
-    
-        
+
+
     generate_final_plot()
     print(f"Successfully done {len(nb_users)} simulations!")
-    
+
 
 def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None:
     print(f"\tInitializing simulation #{sim_id}")
@@ -42,7 +45,7 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
     print("\tStarting simulation...")
     tick = 0
     while tick < max_ticks:
-        if (tick % 500 == 0):
+        if tick % 500 == 0:
             print(f"(#{sim_id}) Iteration {tick}...")
         packet_gen.generateUsersPackets(
             users, tick
@@ -51,38 +54,50 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
             users
         )  # Donner les UR aux users
 
-        miss = scheduler.apply_repartition(updates, tick) # Vider les paquets utilisés
-        
+        miss = scheduler.apply_repartition(updates, tick)  # Vider les paquets utilisés
+
         # record UR missrate
         record_ur_usage(scheduler.MAX_UR - miss, len(updates))
 
         # record delay
-        _process_delay(users, tick)
+        process_delay(users, tick)
 
         tick += 1
     print(f"\tSimulation #{sim_id} successfully ended !")
     generate_plots(sim_id)
     finalise_round(nb_users)
-    
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument("max_ticks", type=int, help="Max ticks per simulation")
-    parser.add_argument("algo", type=str, help="The algorithm to use.", choices=algos.keys())
-    
+    parser.add_argument(
+        "algo", type=str, help="The algorithm to use.", choices=algos.keys()
+    )
+
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--users", type=int, help="Constant user count across simulations")
-    group.add_argument("--users-list", type=parse_users_list, help="User number list (e.g. 2,3,5)")
-    group.add_argument("--users-range", type=parse_users_range, help="User number list range (start:iterations:step)")
-    group.add_argument("--users-mult", type=parse_users_mult, help="User number list mult (start:iterations:multiplier)")
-    
+    group.add_argument(
+        "--users", type=int, help="Constant user count across simulations"
+    )
+    group.add_argument(
+        "--users-list", type=parse_users_list, help="User number list (e.g. 2,3,5)"
+    )
+    group.add_argument(
+        "--users-range",
+        type=parse_users_range,
+        help="User number list range (start:iterations:step)",
+    )
+    group.add_argument(
+        "--users-mult",
+        type=parse_users_mult,
+        help="User number list mult (start:iterations:multiplier)",
+    )
+
     args = parser.parse_args()
-    
+
     if args.users is not None:
         main(args.max_ticks, args.users, args.algo)
     else:
         users_list: list[int] = args.users_list or args.users_range or args.users_mult
         main(args.max_ticks, users_list, args.algo)
-        
