@@ -26,14 +26,16 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str):
         f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users..."
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm))
+        results = list(executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm)))
 
+    bits_ur_by_user = [bits_entry for bits_entry, _ in results]
+    ur_pct_by_user = [ur_entry for _, ur_entry in results]
 
-    generate_final_plot()
+    generate_final_plot(bits_ur_by_user, ur_pct_by_user)
     print(f"Successfully done {len(nb_users)} simulations!")
 
 
-def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None:
+def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> tuple[tuple[float, int], tuple[float, int]]:
     print(f"\tInitializing simulation #{sim_id}")
 
     users: list[User] = init(nb_users)
@@ -66,7 +68,7 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str) -> None
         tick += 1
     print(f"\tSimulation #{sim_id} successfully ended !")
     generate_plots(sim_id)
-    finalise_round(nb_users)
+    return finalise_round(nb_users)
 
 
 if __name__ == "__main__":

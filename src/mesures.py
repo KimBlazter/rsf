@@ -95,11 +95,14 @@ def record_bits(bits: int, avg_snr: int) -> None:
         _bits_loin.append(bits)
 
 
-def finalise_round(n_users: int) -> None:
+def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int]]:
     """Finalise le tour de simulation pour un nombre n d'utilisateurs.
 
     Args:
         n_users: nombre d'utilisateurs dans le tour de simulation
+
+    Returns:
+        ((avg_bits, n_users), (avg_ur_usage, n_users))
 
     Appelée une fois par tour de simulation (tick courant == MAX_TICKS).
     """
@@ -107,10 +110,7 @@ def finalise_round(n_users: int) -> None:
     bits_per_ur = _bits_proche + _bits_loin
 
     avg_bits = sum(bits_per_ur) / len(bits_per_ur)
-    _bits_ur_by_user.append((avg_bits, n_users))
-
     avg_ur_usage = sum(_ur_pct) / len(_ur_pct)
-    _ur_pct_by_user.append((avg_ur_usage, n_users))
 
     # clear values for next round
     _ur_pct.clear()
@@ -118,6 +118,8 @@ def finalise_round(n_users: int) -> None:
     _bits_loin.clear()
     _delais_proche.clear()
     _delais_loin.clear()
+
+    return (avg_bits, n_users), (avg_ur_usage, n_users)
 
 
 #######################################################
@@ -173,14 +175,17 @@ def generate_plots(sim_id: int) -> None:
     print("Graphiques sauvegardés dans", output_dir)
 
 
-def generate_final_plot() -> None:
+def generate_final_plot(
+    bits_ur_by_user: list[tuple[float, int]],
+    ur_pct_by_user: list[tuple[float, int]],
+) -> None:
     """Génère un graphique final avec bits/UR en y et nb_user en x."""
     output_dir = "mesures"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    nb_users = [entry[1] for entry in _bits_ur_by_user]
-    bits_per_ur = [entry[0] for entry in _bits_ur_by_user]
+    nb_users = [entry[1] for entry in bits_ur_by_user]
+    bits_per_ur = [entry[0] for entry in bits_ur_by_user]
 
     plt.figure()
     plt.plot(nb_users, bits_per_ur, marker="o")
@@ -190,8 +195,8 @@ def generate_final_plot() -> None:
     plt.savefig(f"{output_dir}/bits_ur_by_user.png")
     plt.close()
 
-    nb_users = [entry[1] for entry in _ur_pct_by_user]
-    avg_ur_usage = [entry[0] for entry in _ur_pct_by_user]
+    nb_users = [entry[1] for entry in ur_pct_by_user]
+    avg_ur_usage = [entry[0] for entry in ur_pct_by_user]
 
     plt.figure()
     plt.plot(nb_users, avg_ur_usage, marker="o")
@@ -208,6 +213,8 @@ if __name__ == "__main__":
     from random import randint, random
 
     # Simuler plusieurs tours avec un nombre croissant d'utilisateurs
+    all_bits: list[tuple[float, int]] = []
+    all_ur: list[tuple[float, int]] = []
     for sim_id, n_users in enumerate([5, 10, 15, 20, 25]):
         # Simuler 100 ticks par tour
         for tick in range(100):
@@ -225,6 +232,8 @@ if __name__ == "__main__":
                 record_bits(randint(4, 56), avg_snr=7)
 
         generate_plots(sim_id)
-        finalise_round(n_users)
+        bits_entry, ur_entry = finalise_round(n_users)
+        all_bits.append(bits_entry)
+        all_ur.append(ur_entry)
 
-    generate_final_plot()
+    generate_final_plot(all_bits, all_ur)
