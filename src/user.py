@@ -4,10 +4,11 @@ import sys
 from mesures import record_bits, record_delay
 
 class User:
-    def __init__(self, id, avgSNR):
+    def __init__(self, id, avgSNR, relay_ratio):
         self.id = id
         self.buffer:Buffer = Buffer()  # Initialize with a buffer of 1000 bits
         self.avgSNR = avgSNR
+        self.relay_ratio = relay_ratio
 
     def _add_packet(self, packet: Packet) -> None:
         self.buffer.push(packet)
@@ -21,4 +22,4 @@ class User:
         self.buffer.pop(bits, curr_tick)
         record_bits(bits, self.avgSNR)
 
-DUMMY_USER = User(-1, sys.maxsize)
+DUMMY_USER = User(-1, sys.maxsize, 0)
