@@ -38,7 +38,7 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str, measure_time
 
 def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str, measure_time: bool = False) -> tuple[tuple[float, int], tuple[float, int]]:
     print(f"\tInitializing simulation #{sim_id}")
-    start = perf_counter()
+    start = perf_counter() if measure_time else 0
 
     users: list[User] = init(nb_users)
 
@@ -68,8 +68,11 @@ def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str, measure
         process_delay(users, tick)
 
         tick += 1
-    end = perf_counter()
-    print(f"\tSimulation #{sim_id} successfully ended in {(end - start):0.2f}s !")
+    end = perf_counter() if measure_time else 0
+    if measure_time:
+        print(f"\tSimulation #{sim_id} successfully ended in {(end - start):0.2f}s !")
+    else:
+        print(f"\tSimulation #{sim_id} successfully ended !")
     
     generate_plots(sim_id)
     return finalise_round(nb_users)
