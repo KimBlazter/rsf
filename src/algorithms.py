@@ -71,8 +71,39 @@ def rr(users: list[User]) -> tuple[User, int]:
     selected = choice(users)
     return (selected, _snr(selected)) if selected is not None else (DUMMY_USER, -1)
 
+def cei(users: list[User]) -> tuple[User, int]:
+    """
+    Selects the user with the highest vaul of (SNR * RELAY_RATIO)
+
+    Args:
+        users: List of candidate users.
+
+    Returns:
+        A tuple containing:
+            - The randomly selected user.
+            - The corresponding SNR value.
+
+    Notes:
+        If the user list is empty, a dummy user with SNR -1
+        is returned.
+    """
+    def _select_max(
+        acc: tuple[User, int], user: User
+    ) -> tuple[User, int]:
+        """
+        Compares the current best user (accumulator) with a new user
+        and returns the one with the higher SNR.
+        """
+        snr = _snr(user) * user.relay_ratio
+        return acc if acc[1] >= snr else (user, snr)
+
+    best_user, snr = reduce(_select_max, users, (DUMMY_USER, -1))
+    return (best_user, snr * (1 - best_user.relay_ratio)) # only give bits for this user
+
+
 #: Dictionary mapping algorithm names to their implementation.
 algos: dict[str, Callable[[list[User]], tuple[User, int]]] = {
     "MaxSNR": max_snr,
-    "RR": rr
+    "RR": rr,
+    "CEI": cei
 }
