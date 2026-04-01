@@ -62,7 +62,7 @@ class Buffer:
             # On regarde le premier paquet de la file (sans le retirer encore)
             pkt = self.queue[0]
             if transmitted + pkt.size <= bits:
-                # Le paquet tient dans le budget → on le transmet
+                # Le paquet tient dans le budget → on le transmet entièrement
                 transmitted += pkt.size
                 delay_sum += current_tick - pkt.timestamp
                 sent_packets += 1
@@ -70,7 +70,14 @@ class Buffer:
                 self.queue.popleft()
                 self.current_size -= pkt.size
             else:
-                # Le prochain paquet est trop gros pour le budget restant → on arrête
+                # Le prochain paquet est trop gros pour le budget restant
+                # TODO : modif?
+                remaining_bits = bits - transmitted
+                transmitted += remaining_bits
+                pkt.size -= remaining_bits
+                self.current_size -= remaining_bits
+                # Inclure le délai du paquet partiellement transmis
+                delay_sum += current_tick - pkt.timestamp
                 break
         return transmitted, delay_sum, sent_packets
 
