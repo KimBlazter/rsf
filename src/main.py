@@ -47,10 +47,12 @@ def main(
             )
         )
 
-    bits_ur_by_user = [bits_entry for bits_entry, _ in results]
-    ur_pct_by_user = [ur_entry for _, ur_entry in results]
+    bits_ur_by_user = [r[0] for r in results]
+    ur_pct_by_user = [r[1] for r in results]
+    delai_proche_by_user = [r[2] for r in results]
+    delai_loin_by_user = [r[3] for r in results]
 
-    generate_final_plot(bits_ur_by_user, ur_pct_by_user)
+    generate_final_plot(bits_ur_by_user, ur_pct_by_user, delai_proche_by_user, delai_loin_by_user)
     print(f"Successfully done {len(nb_users)} simulations!")
 
 
@@ -60,7 +62,7 @@ def simulate(
     nb_users: int,
     algorithm: str,
     measure_time: bool = False,
-) -> tuple[tuple[float, int], tuple[float, int]]:
+) -> tuple[tuple[float, int], tuple[float, int], tuple[float, int], tuple[float, int]]:
     print(f"\tInitializing simulation #{sim_id}")
     start = perf_counter() if measure_time else 0
 

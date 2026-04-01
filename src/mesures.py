@@ -15,8 +15,10 @@ _delais_proche: list[float] = []  # délai par paquet (proche)
 _delais_loin: list[float] = []  # délai par paquet (loin)
 _bits_proche: list[int] = []  # bits par UR (proche)
 _bits_loin: list[int] = []  # bits par UR (loin)
-_bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateurs)
-_ur_pct_by_user: list[tuple[float, int]] = []  # (%UR moyen, nb utilisateurs)
+_bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateurs)[]
+_ur_pct_by_user: list[tuple[float, int]] = []  # (%UR moyen, nb utilisateurs)[]
+_delai_proche_by_user: list[tuple[float, int]] = []  # (délai moyen, nb utilisateurs)[]
+_delai_loin_by_user: list[tuple[float, int]] = []  # (délai moyen, nb utilisateurs)[]
 
 OUTPUT_DIR = "mesures"
 
@@ -107,14 +109,14 @@ def record_bits(bits: int, avg_snr: int) -> None:
         _bits_loin.append(bits)
 
 
-def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int]]:
+def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int], tuple[float, int], tuple[float, int]]:
     """Finalise le tour de simulation pour un nombre n d'utilisateurs.
 
     Args:
         n_users: nombre d'utilisateurs dans le tour de simulation
 
     Returns:
-        ((avg_bits, n_users), (avg_ur_usage, n_users))
+        ((avg_bits, n_users), (avg_ur_usage, n_users), (avg_delay_proche, n_users), (avg_delay_loin, n_users))
 
     Appelée une fois par tour de simulation (tick courant == MAX_TICKS).
     """
@@ -123,8 +125,8 @@ def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int]]:
 
     avg_bits = sum(bits_per_ur) / len(bits_per_ur)
     avg_ur_usage = sum(_ur_pct) / len(_ur_pct)
-
-    # Add delay by nb users mesures
+    avg_delay_proche = sum(_delais_proche) / len(_delais_proche)
+    avg_delay_loin = sum(_delais_loin) / len(_delais_loin)
 
     # clear values for next round
     _ur_pct.clear()
@@ -133,7 +135,7 @@ def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int]]:
     _delais_proche.clear()
     _delais_loin.clear()
 
-    return (avg_bits, n_users), (avg_ur_usage, n_users)
+    return (avg_bits, n_users), (avg_ur_usage, n_users), (avg_delay_proche, n_users), (avg_delay_loin, n_users)
 
 
 #######################################################
@@ -192,6 +194,8 @@ def generate_plots(sim_id: int) -> None:
 def generate_final_plot(
     bits_ur_by_user: list[tuple[float, int]],
     ur_pct_by_user: list[tuple[float, int]],
+    delai_proche_by_user: list[tuple[float, int]],
+    delai_loin_by_user: list[tuple[float, int]],
 ) -> None:
     """Génère un graphique final avec bits/UR en y et nb_user en x."""
 
@@ -217,9 +221,24 @@ def generate_final_plot(
     plt.savefig(f"{OUTPUT_DIR}/ur_usage_by_user.png")
     plt.close()
 
-    # Add delay by nb users graph
+    # Délai moyen par nombre d'utilisateurs (proche vs loin)
+    nb_users_proche = [entry[1] for entry in delai_proche_by_user]
+    delai_proche = [entry[0] for entry in delai_proche_by_user]
 
-    print(f"Graphique final sauvegardé dans {OUTPUT_DIR}/bits_ur_by_user.png")
+    nb_users_loin = [entry[1] for entry in delai_loin_by_user]
+    delai_loin = [entry[0] for entry in delai_loin_by_user]
+
+    plt.figure()
+    plt.plot(nb_users_proche, delai_proche, marker="o", label="Proche")
+    plt.plot(nb_users_loin, delai_loin, marker="o", label="Loin")
+    plt.xlabel("Nombre d'utilisateurs")
+    plt.ylabel("Délai moyen")
+    plt.title("Délai moyen en fonction du nombre d'utilisateurs")
+    plt.legend()
+    plt.savefig(f"{OUTPUT_DIR}/delai_by_user.png")
+    plt.close()
+
+    print(f"Graphiques finaux sauvegardés dans {OUTPUT_DIR}/")
 
 
 if __name__ == "__main__":
@@ -228,6 +247,8 @@ if __name__ == "__main__":
     # Simuler plusieurs tours avec un nombre croissant d'utilisateurs
     all_bits: list[tuple[float, int]] = []
     all_ur: list[tuple[float, int]] = []
+    all_delai_proche: list[tuple[float, int]] = []
+    all_delai_loin: list[tuple[float, int]] = []
     for sim_id, n_users in enumerate([5, 10, 15, 20, 25]):
         # Simuler 100 ticks par tour
         for tick in range(100):
@@ -245,8 +266,10 @@ if __name__ == "__main__":
                 record_bits(randint(4, 56), avg_snr=LOIN_AVG_SNR)
 
         generate_plots(sim_id)
-        bits_entry, ur_entry = finalise_round(n_users)
+        bits_entry, ur_entry, delai_proche_entry, delai_loin_entry = finalise_round(n_users)
         all_bits.append(bits_entry)
         all_ur.append(ur_entry)
+        all_delai_proche.append(delai_proche_entry)
+        all_delai_loin.append(delai_loin_entry)
 
-    generate_final_plot(all_bits, all_ur)
+    generate_final_plot(all_bits, all_ur, all_delai_proche, all_delai_loin)
