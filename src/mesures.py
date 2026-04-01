@@ -71,16 +71,14 @@ def process_delay(users: list[User], curr_tick: int) -> None:
     record_delay(
         sum_proche / packet_c_proche if packet_c_proche != 0 else 0,
         PROCHE_AVG_SNR,
-        curr_tick
     )
     record_delay(
         sum_loin / packet_c_loin if packet_c_loin != 0 else 0,
         LOIN_AVG_SNR,
-        curr_tick
     )
 
 
-def record_delay(delay: float, avg_snr: int, curr_tick: int) -> None:
+def record_delay(delay: float, avg_snr: int) -> None:
     """Enregistre le délai d'un paquet transmis.
 
     Appelée une fois par paquet transmis depuis buffer.pop().
@@ -127,6 +125,8 @@ def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int]]:
     avg_bits = sum(bits_per_ur) / len(bits_per_ur)
     avg_ur_usage = sum(_ur_pct) / len(_ur_pct)
 
+    # Add delay by nb users mesures
+
     # clear values for next round
     _ur_pct.clear()
     _bits_proche.clear()
@@ -161,8 +161,8 @@ def generate_plots(sim_id: int) -> None:
 
     # Délai par paquet (proche vs loin)
     plt.figure()
-    plt.plot([np.average(i) for i in _delais_proche], label="Proche", alpha=0.7)
-    plt.plot([np.average(i) for i in _delais_loin], label="Loin", alpha=0.7)
+    plt.plot(_delais_proche, label="Proche", alpha=0.7)
+    plt.plot(_delais_loin, label="Loin", alpha=0.7)
     plt.xlabel("Temps (Tick)")
     plt.ylabel("Délai moyen (par user)")
     plt.title("Délai moyen par tick")
@@ -195,9 +195,6 @@ def generate_final_plot(
     ur_pct_by_user: list[tuple[float, int]],
 ) -> None:
     """Génère un graphique final avec bits/UR en y et nb_user en x."""
-    output_dir = "mesures"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     nb_users = [entry[1] for entry in bits_ur_by_user]
     bits_per_ur = [entry[0] for entry in bits_ur_by_user]
@@ -240,13 +237,13 @@ if __name__ == "__main__":
 
             # Quelques paquets transmis par tick
             for _ in range(randint(5, 20)):
-                # Proche (avgSNR=11): délai entre 0 et 5 ticks
-                record_delay(random() * 5, avg_snr=11, curr_tick=tick)
-                record_bits(randint(20, 88), avg_snr=11)
+                # Proche: délai entre 0 et 5 ticks
+                record_delay(random() * 5, avg_snr=PROCHE_AVG_SNR)
+                record_bits(randint(20, 88), avg_snr=PROCHE_AVG_SNR)
 
-                # Loin (avgSNR=7): délai plus élevé, entre 2 et 10 ticks
-                record_delay(2 + random() * 8, avg_snr=7, curr_tick=tick)
-                record_bits(randint(4, 56), avg_snr=7)
+                # Loin: délai plus élevé, entre 2 et 10 ticks
+                record_delay(2 + random() * 8, avg_snr=LOIN_AVG_SNR)
+                record_bits(randint(4, 56), avg_snr=LOIN_AVG_SNR)
 
         generate_plots(sim_id)
         bits_entry, ur_entry = finalise_round(n_users)

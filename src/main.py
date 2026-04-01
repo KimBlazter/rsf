@@ -5,6 +5,7 @@ import shutil
 from time import perf_counter
 from itertools import repeat
 
+from algorithms import algos
 from argparser import parse_users_list, parse_users_mult, parse_users_range
 from constant import PACKET_SIZE
 from initialization import init
@@ -19,7 +20,7 @@ from mesures import (
 from packet import PacketGenerator
 from scheduler import Scheduler
 from user import User
-from algorithms import algos
+
 
 def main(max_ticks: int, nb_users: int | list[int], algorithm: str, measure_time: bool = False):
     if isinstance(nb_users, int):
@@ -30,7 +31,16 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str, measure_time
         f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users..."
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        results = list(executor.map(simulate, range(len(nb_users)), repeat(max_ticks), nb_users, repeat(algorithm), repeat(measure_time)))
+        results = list(
+            executor.map(
+                simulate,
+                range(len(nb_users)),
+                repeat(max_ticks),
+                nb_users,
+                repeat(algorithm),
+                repeat(measure_time),
+            )
+        )
 
     bits_ur_by_user = [bits_entry for bits_entry, _ in results]
     ur_pct_by_user = [ur_entry for _, ur_entry in results]
@@ -39,7 +49,9 @@ def main(max_ticks: int, nb_users: int | list[int], algorithm: str, measure_time
     print(f"Successfully done {len(nb_users)} simulations!")
 
 
-def simulate(sim_id: int, max_ticks: int, nb_users: int, algorithm: str, measure_time: bool = False) -> tuple[tuple[float, int], tuple[float, int]]:
+def simulate(
+    sim_id: int, max_ticks: int, nb_users: int, algorithm: str, measure_time: bool = False
+) -> tuple[tuple[float, int], tuple[float, int]]:
     print(f"\tInitializing simulation #{sim_id}")
     start = perf_counter() if measure_time else 0
 
