@@ -2,7 +2,6 @@ import argparse
 import concurrent.futures
 import os
 import shutil
-from itertools import repeat
 from time import perf_counter
 
 from algorithms import algos
@@ -27,32 +26,42 @@ def main(
     nb_users: int | list[int],
     algorithm: str,
     measure_time: bool = False,
-):
+) -> None:
     if isinstance(nb_users, int):
-        simulate(0, max_ticks, nb_users, algorithm, measure_time)
+        _ = simulate(0, max_ticks, nb_users, algorithm, measure_time)
         return
 
     print(
         f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users..."
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        results = list(
-            executor.map(
-                simulate,
-                range(len(nb_users)),
-                repeat(max_ticks),
-                nb_users,
-                repeat(algorithm),
-                repeat(measure_time),
+        futures = {
+            executor.submit(simulate, i, max_ticks, n, algorithm, measure_time): i
+            for i, n in enumerate(nb_users)
+        }
+        results: list[
+            tuple[
+                tuple[float, int],
+                tuple[float, int],
+                tuple[float, int],
+                tuple[float, int],
+            ]
+            | None
+        ] = [None] * len(nb_users)
+        for done_count, f in enumerate(concurrent.futures.as_completed(futures), 1):
+            results[futures[f]] = f.result()
+            print(
+                f"Progress: {done_count}/{len(nb_users)} ({done_count * 100 // len(nb_users)}%)"
             )
-        )
 
-    bits_ur_by_user = [r[0] for r in results]
-    ur_pct_by_user = [r[1] for r in results]
-    delai_proche_by_user = [r[2] for r in results]
-    delai_loin_by_user = [r[3] for r in results]
+    bits_ur_by_user = [r[0] for r in results if r is not None]
+    ur_pct_by_user = [r[1] for r in results if r is not None]
+    delai_proche_by_user = [r[2] for r in results if r is not None]
+    delai_loin_by_user = [r[3] for r in results if r is not None]
 
-    generate_final_plot(bits_ur_by_user, ur_pct_by_user, delai_proche_by_user, delai_loin_by_user)
+    generate_final_plot(
+        bits_ur_by_user, ur_pct_by_user, delai_proche_by_user, delai_loin_by_user
+    )
     print(f"Successfully done {len(nb_users)} simulations!")
 
 
@@ -78,7 +87,7 @@ def simulate(
     while tick < max_ticks:
         if tick % 500 == 0:
             print(f"(#{sim_id}) Iteration {tick}...")
-        packet_gen.generateUsersPackets(
+        _ = packet_gen.generateUsersPackets(
             users, tick
         )  # Generate packets in each user's buffer
         updates: list[tuple[User, int]] = scheduler.select_repartition(
@@ -88,10 +97,10 @@ def simulate(
         miss = scheduler.apply_repartition(updates, tick)  # Vider les paquets utilisés
 
         # record UR missrate
-        record_ur_usage(scheduler.MAX_UR - miss, scheduler.MAX_UR)
+        _ = record_ur_usage(scheduler.MAX_UR - miss, scheduler.MAX_UR)
 
         # record delay
-        process_delay(users, tick)
+        _ = process_delay(users, tick)
 
         tick += 1
     end = perf_counter() if measure_time else 0
@@ -100,7 +109,7 @@ def simulate(
     else:
         print(f"\tSimulation #{sim_id} successfully ended !")
 
-    generate_plots(sim_id)
+    _ = generate_plots(sim_id)
     return finalise_round(nb_users)
 
 
