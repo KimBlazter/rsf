@@ -1,5 +1,7 @@
 import argparse
 import concurrent.futures
+import os
+import shutil
 from time import perf_counter
 from itertools import repeat
 
@@ -7,6 +9,7 @@ from argparser import parse_users_list, parse_users_mult, parse_users_range
 from constant import PACKET_SIZE
 from initialization import init
 from mesures import (
+    OUTPUT_DIR,
     finalise_round,
     generate_final_plot,
     generate_plots,
@@ -107,6 +110,11 @@ if __name__ == "__main__":
     parser.add_argument("--time", action="store_true" ,help="Measure simulations time")
 
     args = parser.parse_args()
+
+    # Clear measurements output dir
+    if os.path.exists(OUTPUT_DIR):
+        shutil.rmtree(OUTPUT_DIR)
+        os.makedirs(OUTPUT_DIR)
 
     if args.users is not None:
         main(args.max_ticks, args.users, args.algo, measure_time=args.time)

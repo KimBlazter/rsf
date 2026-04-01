@@ -18,6 +18,9 @@ _bits_loin: list[int] = []  # bits par UR (loin)
 _bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateurs)
 _ur_pct_by_user: list[tuple[float, int]] = []  # (%UR moyen, nb utilisateurs)
 
+OUTPUT_DIR = "mesures"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # # Mesures à prendre
 # > Pour chaque, faire de moyennes pour les utilisateurs loin / proches
 #
@@ -143,7 +146,7 @@ def generate_plots(sim_id: int) -> None:
     """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
 
-    output_dir = f"mesures/sim-{sim_id}"
+    output_dir = f"{OUTPUT_DIR}/sim-{sim_id}"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -204,7 +207,7 @@ def generate_final_plot(
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Bits/UR moyen")
     plt.title("Bits par UR en fonction du nombre d'utilisateurs")
-    plt.savefig(f"{output_dir}/bits_ur_by_user.png")
+    plt.savefig(f"{OUTPUT_DIR}/bits_ur_by_user.png")
     plt.close()
 
     nb_users = [entry[1] for entry in ur_pct_by_user]
@@ -215,10 +218,12 @@ def generate_final_plot(
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Pourcentage d'UR utilisées")
     plt.title("Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs")
-    plt.savefig(f"{output_dir}/ur_usage_by_user.png")
+    plt.savefig(f"{OUTPUT_DIR}/ur_usage_by_user.png")
     plt.close()
 
-    print(f"Graphique final sauvegardé dans {output_dir}/bits_ur_by_user.png")
+    # Add delay by nb users graph
+
+    print(f"Graphique final sauvegardé dans {OUTPUT_DIR}/bits_ur_by_user.png")
 
 
 if __name__ == "__main__":
