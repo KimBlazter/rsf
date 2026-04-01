@@ -1,5 +1,18 @@
 import argparse
 
+from algorithms import algos
+
+
+def parse_algo_list(value: str) -> list[str]:
+    algo_list = [x.strip() for x in value.split(",")]
+    for a in algo_list:
+        if a not in algos:
+            raise argparse.ArgumentTypeError(
+                f"Unknown algorithm: {a}. Choose from {list(algos.keys())}"
+            )
+    return algo_list
+
+
 def parse_users_list(value: str) -> list[int]:
     try:
         users = [int(x.strip()) for x in value.split(",")]

@@ -109,7 +109,9 @@ def record_bits(bits: int, avg_snr: int) -> None:
         _bits_loin.append(bits)
 
 
-def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int], tuple[float, int], tuple[float, int]]:
+def finalise_round(
+    n_users: int,
+) -> tuple[tuple[float, int], tuple[float, int], tuple[float, int], tuple[float, int]]:
     """Finalise le tour de simulation pour un nombre n d'utilisateurs.
 
     Args:
@@ -135,7 +137,12 @@ def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int], 
     _delais_proche.clear()
     _delais_loin.clear()
 
-    return (avg_bits, n_users), (avg_ur_usage, n_users), (avg_delay_proche, n_users), (avg_delay_loin, n_users)
+    return (
+        (avg_bits, n_users),
+        (avg_ur_usage, n_users),
+        (avg_delay_proche, n_users),
+        (avg_delay_loin, n_users),
+    )
 
 
 #######################################################
@@ -143,11 +150,11 @@ def finalise_round(n_users: int) -> tuple[tuple[float, int], tuple[float, int], 
 #######################################################
 
 
-def generate_plots(sim_id: int) -> None:
+def generate_plots(sim_id: int, algorithm: str) -> None:
     """Génère les graphiques à partir des données collectées."""
     print("Génération des graphiques...")
 
-    output_dir = f"{OUTPUT_DIR}/sim-{sim_id}"
+    output_dir = f"{OUTPUT_DIR}/{algorithm}/sim-{sim_id}"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -156,7 +163,7 @@ def generate_plots(sim_id: int) -> None:
     plt.plot(_ur_pct)
     plt.xlabel("Tick")
     plt.ylabel("% d'UR utilisées")
-    plt.title("Taux d'utilisation des UR par tick")
+    plt.title(f"Taux d'utilisation des UR par tick ({algorithm})")
     plt.savefig(f"{output_dir}/ur_usage.png")
     plt.close()
 
@@ -166,7 +173,7 @@ def generate_plots(sim_id: int) -> None:
     plt.plot(_delais_loin, label="Loin", alpha=0.7)
     plt.xlabel("Temps (Tick)")
     plt.ylabel("Délai moyen (par user)")
-    plt.title("Délai moyen par tick")
+    plt.title(f"Délai moyen par tick ({algorithm})")
     plt.legend()
     plt.savefig(f"{output_dir}/delai.png")
     plt.close()
@@ -183,7 +190,7 @@ def generate_plots(sim_id: int) -> None:
         plt.plot(sorted_loin, cdf_loin, label="Loin", alpha=0.7)
     plt.xlabel("Bits par UR")
     plt.ylabel("CDF")
-    plt.title("CDF des bits par UR")
+    plt.title(f"CDF des bits par UR ({algorithm})")
     plt.legend()
     plt.savefig(f"{output_dir}/bits_par_ur.png")
     plt.close()
@@ -196,8 +203,15 @@ def generate_final_plot(
     ur_pct_by_user: list[tuple[float, int]],
     delai_proche_by_user: list[tuple[float, int]],
     delai_loin_by_user: list[tuple[float, int]],
+    algorithm: str = "",
 ) -> None:
     """Génère un graphique final avec bits/UR en y et nb_user en x."""
+
+    output_dir = f"{OUTPUT_DIR}/{algorithm}" if algorithm else OUTPUT_DIR
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    label = f" ({algorithm})" if algorithm else ""
 
     nb_users = [entry[1] for entry in bits_ur_by_user]
     bits_per_ur = [entry[0] for entry in bits_ur_by_user]
@@ -206,8 +220,8 @@ def generate_final_plot(
     plt.plot(nb_users, bits_per_ur, marker="o")
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Bits/UR moyen")
-    plt.title("Bits par UR en fonction du nombre d'utilisateurs")
-    plt.savefig(f"{OUTPUT_DIR}/bits_ur_by_user.png")
+    plt.title(f"Bits par UR en fonction du nombre d'utilisateurs{label}")
+    plt.savefig(f"{output_dir}/bits_ur_by_user.png")
     plt.close()
 
     nb_users = [entry[1] for entry in ur_pct_by_user]
@@ -217,8 +231,8 @@ def generate_final_plot(
     plt.plot(nb_users, avg_ur_usage, marker="o")
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Pourcentage d'UR utilisées")
-    plt.title("Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs")
-    plt.savefig(f"{OUTPUT_DIR}/ur_usage_by_user.png")
+    plt.title(f"Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs{label}")
+    plt.savefig(f"{output_dir}/ur_usage_by_user.png")
     plt.close()
 
     # Délai moyen par nombre d'utilisateurs (proche vs loin)
@@ -233,43 +247,68 @@ def generate_final_plot(
     plt.plot(nb_users_loin, delai_loin, marker="o", label="Loin")
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Délai moyen")
+    plt.title(f"Délai moyen en fonction du nombre d'utilisateurs{label}")
+    plt.legend()
+    plt.savefig(f"{output_dir}/delai_by_user.png")
+    plt.close()
+
+    print(f"Graphiques finaux sauvegardés dans {output_dir}/")
+
+
+def generate_combined_plot(
+    results_by_algo: dict[
+        str,
+        list[
+            tuple[
+                tuple[float, int],
+                tuple[float, int],
+                tuple[float, int],
+                tuple[float, int],
+            ]
+        ],
+    ],
+) -> None:
+    """Génère des graphiques comparatifs avec toutes les algorithmes sur le même graphe."""
+
+    # Bits/UR par nombre d'utilisateurs
+    plt.figure()
+    for algo, results in results_by_algo.items():
+        nb_users = [r[0][1] for r in results]
+        bits_per_ur = [r[0][0] for r in results]
+        plt.plot(nb_users, bits_per_ur, marker="o", label=algo)
+    plt.xlabel("Nombre d'utilisateurs")
+    plt.ylabel("Bits/UR moyen")
+    plt.title("Bits par UR en fonction du nombre d'utilisateurs")
+    plt.legend()
+    plt.savefig(f"{OUTPUT_DIR}/bits_ur_by_user.png")
+    plt.close()
+
+    # %UR utilisées par nombre d'utilisateurs
+    plt.figure()
+    for algo, results in results_by_algo.items():
+        nb_users = [r[1][1] for r in results]
+        avg_ur_usage = [r[1][0] for r in results]
+        plt.plot(nb_users, avg_ur_usage, marker="o", label=algo)
+    plt.xlabel("Nombre d'utilisateurs")
+    plt.ylabel("Pourcentage d'UR utilisées")
+    plt.title("Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs")
+    plt.legend()
+    plt.savefig(f"{OUTPUT_DIR}/ur_usage_by_user.png")
+    plt.close()
+
+    # Délai moyen par nombre d'utilisateurs (proche vs loin)
+    plt.figure()
+    for algo, results in results_by_algo.items():
+        nb_users = [r[2][1] for r in results]
+        delai_proche = [r[2][0] for r in results]
+        delai_loin = [r[3][0] for r in results]
+        plt.plot(nb_users, delai_proche, marker="o", label=f"{algo} (Proche)")
+        plt.plot(nb_users, delai_loin, marker="x", label=f"{algo} (Loin)")
+    plt.xlabel("Nombre d'utilisateurs")
+    plt.ylabel("Délai moyen")
     plt.title("Délai moyen en fonction du nombre d'utilisateurs")
     plt.legend()
     plt.savefig(f"{OUTPUT_DIR}/delai_by_user.png")
     plt.close()
 
-    print(f"Graphiques finaux sauvegardés dans {OUTPUT_DIR}/")
-
-
-if __name__ == "__main__":
-    from random import randint, random
-
-    # Simuler plusieurs tours avec un nombre croissant d'utilisateurs
-    all_bits: list[tuple[float, int]] = []
-    all_ur: list[tuple[float, int]] = []
-    all_delai_proche: list[tuple[float, int]] = []
-    all_delai_loin: list[tuple[float, int]] = []
-    for sim_id, n_users in enumerate([5, 10, 15, 20, 25]):
-        # Simuler 100 ticks par tour
-        for tick in range(100):
-            # UR usage: entre 400 et 640 UR utilisées par tick
-            record_ur_usage(randint(400, 640), 640)
-
-            # Quelques paquets transmis par tick
-            for _ in range(randint(5, 20)):
-                # Proche: délai entre 0 et 5 ticks
-                record_delay(random() * 5, avg_snr=PROCHE_AVG_SNR)
-                record_bits(randint(20, 88), avg_snr=PROCHE_AVG_SNR)
-
-                # Loin: délai plus élevé, entre 2 et 10 ticks
-                record_delay(2 + random() * 8, avg_snr=LOIN_AVG_SNR)
-                record_bits(randint(4, 56), avg_snr=LOIN_AVG_SNR)
-
-        generate_plots(sim_id)
-        bits_entry, ur_entry, delai_proche_entry, delai_loin_entry = finalise_round(n_users)
-        all_bits.append(bits_entry)
-        all_ur.append(ur_entry)
-        all_delai_proche.append(delai_proche_entry)
-        all_delai_loin.append(delai_loin_entry)
-
-    generate_final_plot(all_bits, all_ur, all_delai_proche, all_delai_loin)
+    print(f"Graphiques comparatifs sauvegardés dans {OUTPUT_DIR}/")

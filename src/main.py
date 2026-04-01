@@ -4,13 +4,18 @@ import os
 import shutil
 from time import perf_counter
 
-from algorithms import algos
-from argparser import parse_users_list, parse_users_mult, parse_users_range
+from argparser import (
+    parse_algo_list,
+    parse_users_list,
+    parse_users_mult,
+    parse_users_range,
+)
 from constant import PACKET_SIZE
 from initialization import init
 from mesures import (
     OUTPUT_DIR,
     finalise_round,
+    generate_combined_plot,
     generate_final_plot,
     generate_plots,
     process_delay,
@@ -24,45 +29,62 @@ from user import User
 def main(
     max_ticks: int,
     nb_users: int | list[int],
-    algorithm: str,
+    algorithms: list[str],
     measure_time: bool = False,
 ) -> None:
     if isinstance(nb_users, int):
-        _ = simulate(0, max_ticks, nb_users, algorithm, measure_time)
+        nb_users_list = [nb_users]
+        single_user = True
+    else:
+        nb_users_list = nb_users
+        single_user = False
+
+    if len(algorithms) == 1 and single_user:
+        _ = simulate(0, max_ticks, nb_users_list[0], algorithms[0], measure_time)
         return
 
+    start = perf_counter() if measure_time else 0
+
+    tasks = [(algo, i, n) for algo in algorithms for i, n in enumerate(nb_users_list)]
+
     print(
-        f"Running {len(nb_users)} simulations using the {algorithm} algorithm with {max_ticks} max ticks and {nb_users} users..."
+        f"Running {len(tasks)} simulations with algorithms {algorithms}, {max_ticks} max ticks and {nb_users_list} users..."
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = {
-            executor.submit(simulate, i, max_ticks, n, algorithm, measure_time): i
-            for i, n in enumerate(nb_users)
+            executor.submit(simulate, i, max_ticks, n, algo, measure_time): (algo, i)
+            for algo, i, n in tasks
         }
-        results: list[
-            tuple[
-                tuple[float, int],
-                tuple[float, int],
-                tuple[float, int],
-                tuple[float, int],
-            ]
-            | None
-        ] = [None] * len(nb_users)
+        results_by_algo: dict[str, list] = {
+            algo: [None] * len(nb_users_list) for algo in algorithms
+        }
         for done_count, f in enumerate(concurrent.futures.as_completed(futures), 1):
-            results[futures[f]] = f.result()
+            algo, idx = futures[f]
+            results_by_algo[algo][idx] = f.result()
             print(
-                f"Progress: {done_count}/{len(nb_users)} ({done_count * 100 // len(nb_users)}%)"
+                f"Progress: {done_count}/{len(tasks)} ({done_count * 100 // len(tasks)}%)"
             )
 
-    bits_ur_by_user = [r[0] for r in results if r is not None]
-    ur_pct_by_user = [r[1] for r in results if r is not None]
-    delai_proche_by_user = [r[2] for r in results if r is not None]
-    delai_loin_by_user = [r[3] for r in results if r is not None]
+    if not single_user:
+        for algo in algorithms:
+            results = results_by_algo[algo]
+            bits_ur_by_user = [r[0] for r in results if r is not None]
+            ur_pct_by_user = [r[1] for r in results if r is not None]
+            delai_proche_by_user = [r[2] for r in results if r is not None]
+            delai_loin_by_user = [r[3] for r in results if r is not None]
+            generate_final_plot(
+                bits_ur_by_user,
+                ur_pct_by_user,
+                delai_proche_by_user,
+                delai_loin_by_user,
+                algo,
+            )
+        if len(algorithms) > 1:
+            generate_combined_plot(results_by_algo)
 
-    generate_final_plot(
-        bits_ur_by_user, ur_pct_by_user, delai_proche_by_user, delai_loin_by_user
+    print(
+        f"Successfully done {len(tasks)} simulations{f' in {perf_counter() - start:.2f}s' if measure_time else ''} !"
     )
-    print(f"Successfully done {len(nb_users)} simulations!")
 
 
 def simulate(
@@ -109,7 +131,7 @@ def simulate(
     else:
         print(f"\tSimulation #{sim_id} successfully ended !")
 
-    _ = generate_plots(sim_id)
+    _ = generate_plots(sim_id, algorithm)
     return finalise_round(nb_users)
 
 
@@ -118,7 +140,9 @@ if __name__ == "__main__":
 
     parser.add_argument("max_ticks", type=int, help="Max ticks per simulation")
     parser.add_argument(
-        "algo", type=str, help="The algorithm to use.", choices=algos.keys()
+        "algo",
+        type=parse_algo_list,
+        help="Algorithm(s) to use, comma-separated (e.g. MaxSNR,RR,CEI)",
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -152,8 +176,10 @@ if __name__ == "__main__":
         os.makedirs(OUTPUT_DIR)
         print(f"Created {OUTPUT_DIR} directory")
 
+    algorithms: list[str] = args.algo
+
     if args.users is not None:
-        main(args.max_ticks, args.users, args.algo, measure_time=args.time)
+        main(args.max_ticks, args.users, algorithms, measure_time=args.time)
     else:
         users_list: list[int] = args.users_list or args.users_range or args.users_mult
-        main(args.max_ticks, users_list, args.algo, measure_time=args.time)
+        main(args.max_ticks, users_list, algorithms, measure_time=args.time)
