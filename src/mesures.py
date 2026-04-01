@@ -19,7 +19,6 @@ _bits_ur_by_user: list[tuple[float, int]] = []  # (bits/UR moyen, nb utilisateur
 _ur_pct_by_user: list[tuple[float, int]] = []  # (%UR moyen, nb utilisateurs)
 
 OUTPUT_DIR = "mesures"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # # Mesures à prendre
 # > Pour chaque, faire de moyennes pour les utilisateurs loin / proches
