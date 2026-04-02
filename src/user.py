@@ -20,8 +20,8 @@ class User:
             self._add_packet(p)
 
     def allocate_bits(self, bits: int, curr_tick: int) -> None:
-        self.buffer.pop(bits, curr_tick)
-        record_bits(bits, self.avgSNR)
+        transmitted, _, _ = self.buffer.pop(bits, curr_tick)
+        record_bits(transmitted, self.avgSNR)
 
 
 DUMMY_USER = User(-1, sys.maxsize, 0)
