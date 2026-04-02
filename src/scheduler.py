@@ -1,6 +1,7 @@
 import constant 
 from user import User, DUMMY_USER
 from algorithms import algos
+from functools import reduce
 
 
 
@@ -41,15 +42,27 @@ class Scheduler():
         """
         selected_users = [u for u in users if len(u.buffer.queue) > 0]
         scheduled = []
-        for _ in range(min(self.MAX_UR, len(selected_users))):
+        print(f"reset")
+        
+        for _ in range(self.MAX_UR):
+            # exit if no user can be selected
+            if selected_users is []:
+                print("breaking")
+                break
+
             best_user, snr = self.select_user(selected_users)
-            if (len(best_user.buffer.queue) - snr * constant.BITS_PER_SNR_POINT) < constant.PACKET_SIZE: # remove user if they don't have anything remaning
+            print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
+    
+            if (best_user.buffer.current_size - snr * constant.BITS_PER_SNR_POINT) < 0: # N'EST PAS UPDATE LE PROBLEME VIENT DE LA (je pense) les users sont rescheduled alors qu'ils ont plus besoin d'UR
+                                                                                        # n'est retiré que si on "one shot" son load
+                print("remove user")
                 selected_users.remove(best_user)
             
+            if (best_user is DUMMY_USER):
+                print("yipee")
+
             scheduled.append((best_user, snr * constant.BITS_PER_SNR_POINT))
 
-        for _ in range(self.MAX_UR - len(selected_users)):
-            scheduled.append((DUMMY_USER, -1))
         return scheduled
     
     def apply_repartition(self, repartition: list[tuple[User, int]], curr_tick: int) -> int:
@@ -61,7 +74,7 @@ class Scheduler():
             repartition: List of tuples containing users and their
                         corresponding allocated bits.
         """
-        self.print_loin_users_allocation(repartition)
+        # self.print_loin_users_allocation(repartition) # REMOVE
         miss = 0
         for user, bits in repartition:
             if user is DUMMY_USER or bits == -1:
