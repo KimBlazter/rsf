@@ -27,7 +27,7 @@ class Scheduler():
         pass
         
 
-    def select_repartition(self, users: list[User]) -> list[tuple[User, int]]:
+    def select_repartition(self, users: list[User], curr_tick: int) -> list[tuple[User, int]]:
         """
         Selects users repeatedly until MAX_UR is reached and computes
         the bit allocation for each selected user.
@@ -45,23 +45,19 @@ class Scheduler():
         print(f"reset")
         
         for _ in range(self.MAX_UR):
-            # exit if no user can be selected
-            if selected_users is []:
-                print("breaking")
-                break
-
             best_user, snr = self.select_user(selected_users)
-            print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
-    
-            if (best_user.buffer.current_size - snr * constant.BITS_PER_SNR_POINT) < 0: # N'EST PAS UPDATE LE PROBLEME VIENT DE LA (je pense) les users sont rescheduled alors qu'ils ont plus besoin d'UR
-                                                                                        # n'est retiré que si on "one shot" son load
+            bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
+            scheduled.append((best_user, bits_to_allocate))
+
+            if best_user is DUMMY_USER:
+                continue
+
+            best_user.allocate_bits(bits_to_allocate, curr_tick)
+
+            # print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
+            if best_user.buffer.current_size <= 0 :
                 print("remove user")
                 selected_users.remove(best_user)
-            
-            if (best_user is DUMMY_USER):
-                print("yipee")
-
-            scheduled.append((best_user, snr * constant.BITS_PER_SNR_POINT))
 
         return scheduled
     
