@@ -56,7 +56,7 @@ def main(
             executor.submit(simulate, i, max_ticks, n, algo, measure_time): (algo, i)
             for algo, i, n in tasks
         }
-        results_by_algo: dict[str, list] = {
+        results_by_algo: dict[str, list] = {  # pyright: ignore[reportMissingTypeArgument]
             algo: [None] * len(nb_users_list) for algo in algorithms
         }
         for done_count, f in enumerate(concurrent.futures.as_completed(futures), 1):
