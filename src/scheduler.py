@@ -1,6 +1,7 @@
+from functools import reduce
+
 import constant
 from algorithms import algos
-from functools import reduce
 from user import DUMMY_USER, User
 
 
@@ -26,7 +27,9 @@ class Scheduler:
         self.algorithm = algorithm
         pass
 
-    def select_repartition(self, users: list[User], curr_tick: int) -> list[tuple[User, int]]:
+    def select_repartition(
+        self, users: list[User], curr_tick: int
+    ) -> list[tuple[User, int]]:
         """
         Selects users repeatedly until MAX_UR is reached and computes
         the bit allocation for each selected user.
@@ -42,7 +45,7 @@ class Scheduler:
         selected_users = [u for u in users if len(u.buffer.queue) > 0]
         scheduled = []
         print(f"reset")
-        
+
         for _ in range(self.MAX_UR):
             best_user, snr = self.select_user(selected_users)
             bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
@@ -51,10 +54,10 @@ class Scheduler:
             if best_user is DUMMY_USER:
                 continue
 
-            best_user.allocate_bits(bits_to_allocate, curr_tick)
+            best_user.allocate_bits(bits_to_allocate, curr_tick, self.algorithm)
 
             # print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
-            if best_user.buffer.current_size <= 0 :
+            if best_user.buffer.current_size <= 0:
                 print("remove user")
                 selected_users.remove(best_user)
 
@@ -98,5 +101,4 @@ class Scheduler:
         """
         if algos.get(self.algorithm) == None:
             raise Exception("Unknown algorithm")
-        return algos.get(self.algorithm)(users) # pyright: ignore[reportOptionalCall]
-
+        return algos.get(self.algorithm)(users)  # pyright: ignore[reportOptionalCall]

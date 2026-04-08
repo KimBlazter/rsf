@@ -1,11 +1,10 @@
 import sys
 
 from buffer import Buffer
+from constant import PDOR_THRESHOLD
 from mesures import record_bits
 from packet import Packet
-import sys
-from mesures import record_bits
-from constant import PDOR_THRESHOLD
+
 
 class User:
     def __init__(self, id, avgSNR, relay_ratio):
@@ -22,25 +21,27 @@ class User:
         for p in packets:
             self._add_packet(p)
 
-    def allocate_bits(self, bits: int, curr_tick: int) -> None:
-        transmitted, _, _ = self.buffer.pop(bits, curr_tick)    
+    def allocate_bits(self, bits: int, curr_tick: int, algo: str) -> None:
+        transmitted, _, _ = self.buffer.pop(bits, curr_tick)
         record_bits(
-            transmitted if algo != "CEI" else transmitted // (1 - self.relay_ratio), self.avgSNR
+            transmitted if algo != "CEI" else transmitted // (1 - self.relay_ratio),
+            self.avgSNR,
         )
 
-        
     def get_pdor(self, tick: int) -> float:
         """Get current PDOR
-        
+
         PDOR = nb_packet with delay > threshold / total_packet_sent
 
         Args:
             tick (int): current simulation tick
-            
+
         Returns:
             (float) current pdor
         """
-        packets_over_threshold = list(filter(lambda p: tick - p.timestamp >  PDOR_THRESHOLD, self.buffer.queue))
+        packets_over_threshold = list(
+            filter(lambda p: tick - p.timestamp > PDOR_THRESHOLD, self.buffer.queue)
+        )
         self.pdor = len(packets_over_threshold) / (len(self.buffer.queue) + 0.1)
         return self.pdor
 
