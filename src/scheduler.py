@@ -1,5 +1,6 @@
 import constant
 from algorithms import algos
+from functools import reduce
 from user import DUMMY_USER, User
 
 
@@ -25,7 +26,7 @@ class Scheduler:
         self.algorithm = algorithm
         pass
 
-    def select_repartition(self, users: list[User]) -> list[tuple[User, int]]:
+    def select_repartition(self, users: list[User], curr_tick: int) -> list[tuple[User, int]]:
         """
         Selects users repeatedly until MAX_UR is reached and computes
         the bit allocation for each selected user.
@@ -40,12 +41,23 @@ class Scheduler:
         """
         selected_users = [u for u in users if len(u.buffer.queue) > 0]
         scheduled = []
-        for _ in range(min(self.MAX_UR, len(selected_users))):
+        print(f"reset")
+        
+        for _ in range(self.MAX_UR):
             best_user, snr = self.select_user(selected_users)
-            scheduled.append((best_user, snr * constant.BITS_PER_SNR_POINT))
+            bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
+            scheduled.append((best_user, bits_to_allocate))
 
-        for _ in range(self.MAX_UR - len(selected_users)):
-            scheduled.append((DUMMY_USER, -1))
+            if best_user is DUMMY_USER:
+                continue
+
+            best_user.allocate_bits(bits_to_allocate, curr_tick)
+
+            # print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
+            if best_user.buffer.current_size <= 0 :
+                print("remove user")
+                selected_users.remove(best_user)
+
         return scheduled
 
     def apply_repartition(
@@ -59,6 +71,7 @@ class Scheduler:
             repartition: List of tuples containing users and their
                         corresponding allocated bits.
         """
+        # self.print_loin_users_allocation(repartition) # REMOVE
         miss = 0
         for user, bits in repartition:
             if user is DUMMY_USER or bits == -1:
@@ -85,4 +98,31 @@ class Scheduler:
         """
         if algos.get(self.algorithm) == None:
             raise Exception("Unknown algorithm")
+<<<<<<< src/scheduler.py
+        return algos.get(self.algorithm)(users) # pyright: ignore[reportOptionalCall]
+
+    def print_loin_users_allocation(self, repartition: list[tuple[User, int]]) -> None:
+        """
+        Simplifies and prints the repartition list to show only users with
+        avgSNR == LOIN_AVG_SNR, with their total allocated bits summed.
+
+        Args:
+            repartition: List of tuples containing users and their allocated bits.
+        """
+        # Filter users with LOIN_AVG_SNR and aggregate allocations
+        user_allocations = {}
+        for user, bits in repartition:
+            if user.avgSNR == constant.LOIN_AVG_SNR:
+                if user.id not in user_allocations:
+                    user_allocations[user.id] = {"user": user, "total_bits": 0}
+                user_allocations[user.id]["total_bits"] += bits
+        
+        # Print the simplified repartition
+        print(f"\nUsers with avgSNR == {constant.LOIN_AVG_SNR}:")
+        for user_id, data in user_allocations.items():
+            user = data["user"]
+            total_bits = data["total_bits"]
+            print(f"  User {user.id} (avgSNR={user.avgSNR}): {total_bits} bits allocated")
+=======
         return algos.get(self.algorithm)(users)  # pyright: ignore[reportOptionalCall]
+>>>>>>> src/scheduler.py

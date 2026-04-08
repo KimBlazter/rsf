@@ -76,8 +76,6 @@ class Buffer:
                 transmitted += remaining_bits
                 pkt.size -= remaining_bits
                 self.current_size -= remaining_bits
-                # Inclure le délai du paquet partiellement transmis
-                delay_sum += current_tick - pkt.timestamp
                 break
         return transmitted, delay_sum, sent_packets
 

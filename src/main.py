@@ -3,6 +3,7 @@ import concurrent.futures
 import os
 import shutil
 from time import perf_counter
+from functools import reduce
 
 from argparser import (
     parse_algo_list,
@@ -23,7 +24,7 @@ from mesures import (
 )
 from packet import PacketGenerator
 from scheduler import Scheduler
-from user import User
+from user import DUMMY_USER, User
 
 
 def main(
@@ -113,10 +114,18 @@ def simulate(
             users, tick
         )  # Generate packets in each user's buffer
         updates: list[tuple[User, int]] = scheduler.select_repartition(
-            users
+            users,
+            tick
         )  # Donner les UR aux users
 
-        miss = scheduler.apply_repartition(updates, tick)  # Vider les paquets utilisés
+        # compute number of unsued UR 
+        miss = reduce(
+            lambda acc, e: acc + 1 if e[0] is DUMMY_USER or e[1] == -1 else acc, 
+            updates, 
+            0
+        )
+        # print(f"dummmy : {DUMMY_USER}")
+        # print(f"list: {updates}")
 
         # record UR missrate
         _ = record_ur_usage(scheduler.MAX_UR - miss, scheduler.MAX_UR)

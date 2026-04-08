@@ -22,10 +22,11 @@ class User:
         for p in packets:
             self._add_packet(p)
 
-    def allocate_bits(self, bits: int, curr_tick: int, algo: str) -> None:
-        self.buffer.pop(bits, curr_tick)
+<<<<<<< src/user.py
+    def allocate_bits(self, bits: int, curr_tick: int) -> None:
+        transmitted, _, _ = self.buffer.pop(bits, curr_tick)    
         record_bits(
-            bits if algo != "CEI" else bits // (1 - self.relay_ratio), self.avgSNR
+            transmitted if algo != "CEI" else transmitted // (1 - self.relay_ratio), self.avgSNR
         )
 
         
