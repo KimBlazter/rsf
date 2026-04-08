@@ -22,7 +22,6 @@ class User:
         for p in packets:
             self._add_packet(p)
 
-<<<<<<< src/user.py
     def allocate_bits(self, bits: int, curr_tick: int) -> None:
         transmitted, _, _ = self.buffer.pop(bits, curr_tick)    
         record_bits(
