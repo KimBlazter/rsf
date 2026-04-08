@@ -1,7 +1,8 @@
-from user import User, DUMMY_USER
-from typing import Callable
 from functools import reduce
-from random import randint, choice
+from random import choice, randint
+from typing import Callable
+
+from user import DUMMY_USER, User
 
 
 def _snr(user: User) -> int:
@@ -37,9 +38,7 @@ def max_snr(users: list[User]) -> tuple[User, int]:
         is returned.
     """
 
-    def _select_max(
-        acc: tuple[User, int], user: User
-    ) -> tuple[User, int]:
+    def _select_max(acc: tuple[User, int], user: User) -> tuple[User, int]:
         """
         Compares the current best user (accumulator) with a new user
         and returns the one with the higher SNR.
@@ -48,6 +47,7 @@ def max_snr(users: list[User]) -> tuple[User, int]:
         return acc if acc[1] >= snr else (user, snr)
 
     return reduce(_select_max, users, (DUMMY_USER, -1))
+
 
 def rr(users: list[User]) -> tuple[User, int]:
     """
@@ -71,6 +71,7 @@ def rr(users: list[User]) -> tuple[User, int]:
     selected = choice(users)
     return (selected, _snr(selected)) if selected is not None else (DUMMY_USER, -1)
 
+
 def cei(users: list[User]) -> tuple[User, int]:
     """
     Selects the user with the highest vaul of (SNR * RELAY_RATIO)
@@ -87,9 +88,8 @@ def cei(users: list[User]) -> tuple[User, int]:
         If the user list is empty, a dummy user with SNR -1
         is returned.
     """
-    def _select_max(
-        acc: tuple[User, int], user: User
-    ) -> tuple[User, int]:
+
+    def _select_max(acc: tuple[User, int], user: User) -> tuple[User, int]:
         """
         Compares the current best user (accumulator) with a new user
         and returns the one with the higher SNR.
@@ -98,12 +98,15 @@ def cei(users: list[User]) -> tuple[User, int]:
         return acc if acc[1] >= snr else (user, snr)
 
     best_user, snr = reduce(_select_max, users, (DUMMY_USER, -1))
-    return (best_user, snr * (1 - best_user.relay_ratio)) # only give bits for this user
+    return (
+        best_user,
+        snr * (1 - best_user.relay_ratio),
+    )  # only give bits for this user
 
 
 #: Dictionary mapping algorithm names to their implementation.
 algos: dict[str, Callable[[list[User]], tuple[User, int]]] = {
     "MaxSNR": max_snr,
     "RR": rr,
-    "CEI": cei
+    "CEI": cei,
 }

@@ -19,9 +19,11 @@ class User:
         for p in packets:
             self._add_packet(p)
 
-    def allocate_bits(self, bits: int, curr_tick: int) -> None:
+    def allocate_bits(self, bits: int, curr_tick: int, algo: str) -> None:
         self.buffer.pop(bits, curr_tick)
-        record_bits(bits, self.avgSNR)
+        record_bits(
+            bits if algo != "CEI" else bits // (1 - self.relay_ratio), self.avgSNR
+        )
 
 
-DUMMY_USER = User(-1, sys.maxsize, 0)
+DUMMY_USER = User(-1, sys.maxsize, 1)

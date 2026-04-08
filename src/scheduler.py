@@ -1,10 +1,9 @@
-import constant 
-from user import User, DUMMY_USER
+import constant
 from algorithms import algos
+from user import DUMMY_USER, User
 
 
-
-class Scheduler():
+class Scheduler:
     """
     Schedules users according to a selected algorithm and distributes
     radio resources (UR) based on their SNR.
@@ -13,6 +12,7 @@ class Scheduler():
         MAX_UR: Maximum number of scheduling units per repartition cycle.
         algorithm: Name of the scheduling algorithm to use.
     """
+
     MAX_UR = constant.MAX_UR
 
     def __init__(self, algorithm: str) -> None:
@@ -24,7 +24,6 @@ class Scheduler():
         """
         self.algorithm = algorithm
         pass
-        
 
     def select_repartition(self, users: list[User]) -> list[tuple[User, int]]:
         """
@@ -48,8 +47,10 @@ class Scheduler():
         for _ in range(self.MAX_UR - len(selected_users)):
             scheduled.append((DUMMY_USER, -1))
         return scheduled
-    
-    def apply_repartition(self, repartition: list[tuple[User, int]], curr_tick: int) -> int:
+
+    def apply_repartition(
+        self, repartition: list[tuple[User, int]], curr_tick: int
+    ) -> int:
         """
         Applies the computed repartition by delivering the allocated
         bits to each scheduled user.
@@ -63,10 +64,10 @@ class Scheduler():
             if user is DUMMY_USER or bits == -1:
                 miss += 1
                 continue
-            user.allocate_bits(bits, curr_tick) # give bits to user
+            user.allocate_bits(bits, curr_tick, self.algorithm)  # give bits to user
         return miss
 
-    def select_user(self, users: list[User]) -> tuple[User, int] :
+    def select_user(self, users: list[User]) -> tuple[User, int]:
         """
         Selects a single user according to the configured scheduling
         algorithm.
@@ -84,4 +85,4 @@ class Scheduler():
         """
         if algos.get(self.algorithm) == None:
             raise Exception("Unknown algorithm")
-        return algos.get(self.algorithm)(users) # pyright: ignore[reportOptionalCall]
+        return algos.get(self.algorithm)(users)  # pyright: ignore[reportOptionalCall]
