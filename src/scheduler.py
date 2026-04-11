@@ -42,9 +42,8 @@ class Scheduler:
                 - The selected user.
                 - The number of allocated bits.
         """
-        selected_users = [u for u in users if len(u.buffer.queue) > 0]
+        selected_users = [u for u in users if u.buffer.current_size > 0]
         scheduled = []
-        print(f"reset")
 
         for _ in range(self.MAX_UR):
             best_user, snr = self.select_user(selected_users)
@@ -58,7 +57,6 @@ class Scheduler:
 
             # print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
             if best_user.buffer.current_size <= 0:
-                print("remove user")
                 selected_users.remove(best_user)
 
         return scheduled
