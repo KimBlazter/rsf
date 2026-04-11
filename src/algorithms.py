@@ -21,7 +21,7 @@ def _snr(user: User) -> int:
     return randint(0, user.avgSNR * 2)
 
 
-def max_snr(users: list[User]) -> tuple[User, int]:
+def max_snr(users: list[User], tick: int) -> tuple[User, int]:
     """
     Selects the user with the highest instantaneous SNR.
 
@@ -49,7 +49,7 @@ def max_snr(users: list[User]) -> tuple[User, int]:
     return reduce(_select_max, users, (DUMMY_USER, -1))
 
 
-def rr(users: list[User]) -> tuple[User, int]:
+def rr(users: list[User], tick: int) -> tuple[User, int]:
     """
     This implementation is a Random Access strategy, similar in result as RR
     Randomly selects the user.
@@ -72,7 +72,7 @@ def rr(users: list[User]) -> tuple[User, int]:
     return (selected, _snr(selected)) if selected is not None else (DUMMY_USER, -1)
 
 
-def cei(users: list[User]) -> tuple[User, int]:
+def cei(users: list[User], tick: int) -> tuple[User, int]:
     """
     Selects the user with the highest vaul of (SNR * RELAY_RATIO)
 
@@ -105,7 +105,7 @@ def cei(users: list[User]) -> tuple[User, int]:
 
 
 #: Dictionary mapping algorithm names to their implementation.
-algos: dict[str, Callable[[list[User]], tuple[User, int]]] = {
+algos: dict[str, Callable[[list[User], int], tuple[User, int]]] = {
     "MaxSNR": max_snr,
     "RR": rr,
     "CEI": cei,

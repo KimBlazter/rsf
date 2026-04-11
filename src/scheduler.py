@@ -46,7 +46,7 @@ class Scheduler:
         scheduled = []
 
         for _ in range(self.MAX_UR):
-            best_user, snr = self.select_user(selected_users)
+            best_user, snr = self.select_user(selected_users, curr_tick)
             bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
             scheduled.append((best_user, bits_to_allocate))
 
@@ -81,7 +81,7 @@ class Scheduler:
             user.allocate_bits(bits, curr_tick, self.algorithm)  # give bits to user
         return miss
 
-    def select_user(self, users: list[User]) -> tuple[User, int]:
+    def select_user(self, users: list[User], tick: int) -> tuple[User, int]:
         """
         Selects a single user according to the configured scheduling
         algorithm.
@@ -99,4 +99,4 @@ class Scheduler:
         """
         if algos.get(self.algorithm) == None:
             raise Exception("Unknown algorithm")
-        return algos.get(self.algorithm)(users)  # pyright: ignore[reportOptionalCall]
+        return algos.get(self.algorithm)(users, tick)  # pyright: ignore[reportOptionalCall]
