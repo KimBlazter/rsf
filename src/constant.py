@@ -5,6 +5,9 @@ LOW_RELAY_RATIO = 0.1
 HIGH_RELAY_RATIO = 0.8
 
 PDOR_THRESHOLD = 50
+# WFO fairness calibration from cedric.
+WF_ALPHA = 3
+WF_BETA = 10**6
 
 BITS_PER_SNR_POINT = 80 # when allocatin a UR, how much bits do we remove from buffer per SNR point
 MAX_UR = 640 # 128 * 5 # how much UR are available each tick

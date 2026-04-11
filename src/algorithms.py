@@ -3,6 +3,7 @@ from random import choice, randint
 from typing import Callable
 
 from user import DUMMY_USER, User
+from constant import WF_ALPHA, WF_BETA
 
 
 def _snr(user: User) -> int:
@@ -103,10 +104,41 @@ def cei(users: list[User], tick: int) -> tuple[User, int]:
         snr * (1 - best_user.relay_ratio),
     )  # only give bits for this user
 
+def wfo(users: list[User], tick: int) -> tuple[User, int]:
+    """
+    Selects the user with the highest WFO score: SNR * WF_k(tick).
+
+    Args:
+        users: List of candidate users.
+        tick: Current simulation tick.
+
+    Returns:
+        A tuple containing:
+            - The selected user.
+            - The selected user's capacity for this RU.
+
+    Notes:
+        If the user list is empty, a dummy user with score and SNR set to -1
+        is returned.
+        WF_k(tick) is calculated as: 1 + WF_BETA * PDOR_k(tick)^WF_ALPHA
+    """
+    def _select_max(acc: tuple[User, float, int], user: User) -> tuple[User, float, int]:
+        """
+        Compares the current best user (accumulator) with a new user
+        and returns the one with the higher WFO score.
+        """
+        snr = _snr(user)
+        wf = 1 + WF_BETA * (user.get_pdor(tick) ** WF_ALPHA)
+        wfo = snr * wf
+        return acc if acc[1] >= wfo else (user, wfo, snr)  # Keep current best when scores tie.
+
+    best_user, _, snr = reduce(_select_max, users, (DUMMY_USER, -1, -1))
+    return (best_user, snr)  # Scheduler consumes SNR as RU capacity proxy.
 
 #: Dictionary mapping algorithm names to their implementation.
 algos: dict[str, Callable[[list[User], int], tuple[User, int]]] = {
     "MaxSNR": max_snr,
     "RR": rr,
     "CEI": cei,
+    "WFO": wfo,
 }
