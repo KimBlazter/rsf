@@ -1,7 +1,7 @@
 import sys
 
 from buffer import Buffer
-from constant import PDOR_THRESHOLD
+from constant import PDOR_THRESHOLD, PDOR_TICK_INTERVAL
 from mesures import record_bits
 from packet import Packet
 
@@ -12,7 +12,7 @@ class User:
         self.buffer: Buffer = Buffer()  # Initialize with a buffer of 1000 bits
         self.avgSNR = avgSNR
         self.relay_ratio = relay_ratio
-        self.pdor: float
+        self.pdor: float = 0
 
     def _add_packet(self, packet: Packet) -> None:
         self.buffer.push(packet)
@@ -39,6 +39,8 @@ class User:
         Returns:
             (float) current pdor
         """
+        if tick % PDOR_TICK_INTERVAL != 0:  # Update PDOR every 5 ticks
+            return self.pdor
         packets_over_threshold = list(
             filter(lambda p: tick - p.timestamp > PDOR_THRESHOLD, self.buffer.queue)
         )
