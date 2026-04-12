@@ -101,7 +101,7 @@ def cei(users: list[User], tick: int) -> tuple[User, int]:
     best_user, snr = reduce(_select_max, users, (DUMMY_USER, -1))
     return (
         best_user,
-        snr * (1 - best_user.relay_ratio),
+        (snr/best_user.relay_ratio) * (1 - best_user.relay_ratio),
     )  # only give bits for this user
 
 def wfo(users: list[User], tick: int) -> tuple[User, int]:
