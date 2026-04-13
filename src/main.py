@@ -117,12 +117,8 @@ def simulate(
             users, tick
         )  # Donner les UR aux users
 
-        # compute number of unsued UR
-        miss = reduce(
-            lambda acc, e: acc + 1 if e[0] is DUMMY_USER or e[1] == -1 else acc,
-            updates,
-            0,
-        )
+        # compute number of unsued UR 
+        miss = sum(1 for user, bits in updates if user is DUMMY_USER or bits == -1)
         # print(f"dummmy : {DUMMY_USER}")
         # print(f"list: {updates}")
 
