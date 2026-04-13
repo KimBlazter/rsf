@@ -2,8 +2,8 @@ import argparse
 import concurrent.futures
 import os
 import shutil
-from time import perf_counter
 from functools import reduce
+from time import perf_counter
 
 from argparser import (
     parse_algo_list,
@@ -101,8 +101,8 @@ def simulate(
     users: list[User] = init(nb_users)
 
     packet_gen = PacketGenerator(
-        1000, PACKET_SIZE
-    )  # 1000 bits/tick max, 50 paquet size # Bits/ticks calculé selon notre objectif de crash
+        10000, PACKET_SIZE
+    )  # 10000 bits/tick max, 50 paquet size # Bits/ticks calculé selon notre objectif de crash
     scheduler = Scheduler(algorithm)
 
     print("\tStarting simulation...")
@@ -114,15 +114,14 @@ def simulate(
             users, tick
         )  # Generate packets in each user's buffer
         updates: list[tuple[User, int]] = scheduler.select_repartition(
-            users,
-            tick
+            users, tick
         )  # Donner les UR aux users
 
-        # compute number of unsued UR 
+        # compute number of unsued UR
         miss = reduce(
-            lambda acc, e: acc + 1 if e[0] is DUMMY_USER or e[1] == -1 else acc, 
-            updates, 
-            0
+            lambda acc, e: acc + 1 if e[0] is DUMMY_USER or e[1] == -1 else acc,
+            updates,
+            0,
         )
         # print(f"dummmy : {DUMMY_USER}")
         # print(f"list: {updates}")
