@@ -22,6 +22,17 @@ _delai_loin_by_user: list[tuple[float, int]] = []  # (délai moyen, nb utilisate
 
 OUTPUT_DIR = "mesures"
 
+COLORS = {
+    "MaxSNR": "#3b82f6",
+    "MaxSNR-loin": "#1e40af",
+    "RR": "#9333ea",
+    "RR-loin": "#581c87",
+    "CEI": "#65a30d",
+    "CEI-loin": "#3f6212",
+    "WFO": "#dc2626",
+    "WFO-loin": "#7f1d1d",
+}
+
 # # Mesures à prendre
 # > Pour chaque, faire de moyennes pour les utilisateurs loin / proches
 #
@@ -160,7 +171,7 @@ def generate_plots(sim_id: int, algorithm: str) -> None:
 
     # %UR utilisées par tick
     plt.figure()
-    plt.plot(_ur_pct)
+    plt.plot(_ur_pct, color="green")
     plt.xlabel("Tick")
     plt.ylabel("% d'UR utilisées")
     plt.title(f"Taux d'utilisation des UR par tick ({algorithm})")
@@ -169,8 +180,8 @@ def generate_plots(sim_id: int, algorithm: str) -> None:
 
     # Délai par paquet (proche vs loin)
     plt.figure()
-    plt.plot(_delais_proche, label="Proche", alpha=0.7)
-    plt.plot(_delais_loin, label="Loin", alpha=0.7)
+    plt.plot(_delais_proche, label="Proche", alpha=0.7, color="green")
+    plt.plot(_delais_loin, label="Loin", alpha=0.7, color="red")
     plt.xlabel("Temps (Tick)")
     plt.ylabel("Délai moyen (par user)")
     plt.title(f"Délai moyen par tick ({algorithm})")
@@ -183,11 +194,11 @@ def generate_plots(sim_id: int, algorithm: str) -> None:
     if _bits_proche:
         sorted_proche = np.sort(_bits_proche)
         cdf_proche = np.arange(1, len(sorted_proche) + 1) / len(sorted_proche)
-        plt.plot(sorted_proche, cdf_proche, label="Proche", alpha=0.7)
+        plt.plot(sorted_proche, cdf_proche, label="Proche", alpha=0.7, color="green")
     if _bits_loin:
         sorted_loin = np.sort(_bits_loin)
         cdf_loin = np.arange(1, len(sorted_loin) + 1) / len(sorted_loin)
-        plt.plot(sorted_loin, cdf_loin, label="Loin", alpha=0.7)
+        plt.plot(sorted_loin, cdf_loin, label="Loin", alpha=0.7, color="red")
     plt.xlabel("Bits par UR")
     plt.ylabel("CDF")
     plt.title(f"CDF des bits par UR ({algorithm})")
@@ -217,7 +228,7 @@ def generate_final_plot(
     bits_per_ur = [entry[0] for entry in bits_ur_by_user]
 
     plt.figure()
-    plt.plot(nb_users, bits_per_ur, marker="o")
+    plt.plot(nb_users, bits_per_ur, marker="o", color="blue")
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Bits/UR moyen")
     plt.title(f"Bits par UR en fonction du nombre d'utilisateurs{label}")
@@ -228,7 +239,7 @@ def generate_final_plot(
     avg_ur_usage = [entry[0] for entry in ur_pct_by_user]
 
     plt.figure()
-    plt.plot(nb_users, avg_ur_usage, marker="o")
+    plt.plot(nb_users, avg_ur_usage, marker="o", color="blue")
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Pourcentage d'UR utilisées")
     plt.title(f"Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs{label}")
@@ -243,8 +254,8 @@ def generate_final_plot(
     delai_loin = [entry[0] for entry in delai_loin_by_user]
 
     plt.figure()
-    plt.plot(nb_users_proche, delai_proche, marker="o", label="Proche")
-    plt.plot(nb_users_loin, delai_loin, marker="o", label="Loin")
+    plt.plot(nb_users_proche, delai_proche, marker="o", label="Proche", color="green")
+    plt.plot(nb_users_loin, delai_loin, marker="o", label="Loin", color="red")
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Délai moyen")
     plt.title(f"Délai moyen en fonction du nombre d'utilisateurs{label}")
@@ -275,7 +286,7 @@ def generate_combined_plot(
     for algo, results in results_by_algo.items():
         nb_users = [r[0][1] for r in results]
         bits_per_ur = [r[0][0] for r in results]
-        plt.plot(nb_users, bits_per_ur, marker="o", label=algo)
+        plt.plot(nb_users, bits_per_ur, marker="o", label=algo, color=COLORS[algo])
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Bits/UR moyen")
     plt.title("Bits par UR en fonction du nombre d'utilisateurs")
@@ -288,7 +299,7 @@ def generate_combined_plot(
     for algo, results in results_by_algo.items():
         nb_users = [r[1][1] for r in results]
         avg_ur_usage = [r[1][0] for r in results]
-        plt.plot(nb_users, avg_ur_usage, marker="o", label=algo)
+        plt.plot(nb_users, avg_ur_usage, marker="o", label=algo, color=COLORS[algo])
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Pourcentage d'UR utilisées")
     plt.title("Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs")
@@ -302,8 +313,20 @@ def generate_combined_plot(
         nb_users = [r[2][1] for r in results]
         delai_proche = [r[2][0] for r in results]
         delai_loin = [r[3][0] for r in results]
-        plt.plot(nb_users, delai_proche, marker="o", label=f"{algo} (Proche)")
-        plt.plot(nb_users, delai_loin, marker="x", label=f"{algo} (Loin)")
+        plt.plot(
+            nb_users,
+            delai_proche,
+            marker="o",
+            label=f"{algo} (Proche)",
+            color=COLORS[algo],
+        )
+        plt.plot(
+            nb_users,
+            delai_loin,
+            marker="x",
+            label=f"{algo} (Loin)",
+            color=COLORS[f"{algo}-loin"],
+        )
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Délai moyen")
     plt.title("Délai moyen en fonction du nombre d'utilisateurs")
