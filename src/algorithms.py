@@ -104,6 +104,19 @@ def cei(users: list[User], tick: int) -> tuple[User, int]:
 
     best_user, _, snr = reduce(_select_max, users, (DUMMY_USER, -1, -1))
     return (best_user, snr)
+    
+
+def pf(users: list[User], tick: int) -> tuple[User, int]:
+    
+    def _select_max(acc: tuple[User, int, int], user: User) -> tuple[User, int, int]:
+        # user snr / user avg snr
+        snr = _snr(user)
+        snr_on_avg_snr = int(snr / user.avgSNR)
+        return acc if acc[1] >= snr_on_avg_snr else (user, snr_on_avg_snr, snr)
+
+    best_user, _, snr = reduce(_select_max, users, (DUMMY_USER, -1,-1))
+    return (best_user, snr)
+
 
 def wfo(users: list[User], tick: int) -> tuple[User, int]:
     """
@@ -142,4 +155,5 @@ algos: dict[str, Callable[[list[User], int], tuple[User, int]]] = {
     "RR": rr,
     "CEI": cei,
     "WFO": wfo,
+    "PF": pf,
 }
