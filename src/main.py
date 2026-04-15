@@ -101,7 +101,7 @@ def simulate(
     users: list[User] = init(nb_users)
 
     packet_gen = PacketGenerator(
-        10000, PACKET_SIZE
+        5000, PACKET_SIZE
     )  # 10000 bits/tick max, 50 paquet size # Bits/ticks calculé selon notre objectif de crash
     scheduler = Scheduler(algorithm)
 
@@ -123,7 +123,7 @@ def simulate(
         # print(f"list: {updates}")
 
         # record UR missrate
-        _ = record_ur_usage(scheduler.MAX_UR - miss, scheduler.MAX_UR)
+        _ = record_ur_usage(len(updates) - miss, len(updates))
 
         # record delay
         _ = process_delay(users, tick)
