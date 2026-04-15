@@ -90,19 +90,20 @@ def cei(users: list[User], tick: int) -> tuple[User, int]:
         is returned.
     """
 
-    def _select_max(acc: tuple[User, int], user: User) -> tuple[User, int]:
+    def _select_max(acc: tuple[User, int, int], user: User) -> tuple[User, int, int]:
         """
         Compares the current best user (accumulator) with a new user
         and returns the one with the higher SNR.
         """
-        snr = _snr(user) * user.relay_ratio
-        return acc if acc[1] >= snr else (user, snr)
+        snr = _snr(user)
+        metric = snr * (user.relay_ratio + 0.1) # ratio can be 0
+        return acc if acc[1] >= snr else (user, metric, snr)
 
-    best_user, snr = reduce(_select_max, users, (DUMMY_USER, -1))
-    return (
-        best_user,
-        (snr/best_user.relay_ratio) * (1 - best_user.relay_ratio),
-    )  # only give bits for this user
+    if users == []:
+        return (DUMMY_USER, -1)
+
+    best_user, _, snr = reduce(_select_max, users, (DUMMY_USER, -1, -1))
+    return (best_user, snr)
 
 def wfo(users: list[User], tick: int) -> tuple[User, int]:
     """

@@ -46,19 +46,32 @@ class Scheduler:
         scheduled = []
 
         for _ in range(self.MAX_UR):
-            best_user, snr = self.select_user(selected_users, curr_tick)
-            bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
-            scheduled.append((best_user, bits_to_allocate))
-
-            if best_user is DUMMY_USER:
+            if len(selected_users) == 0:
+                scheduled.append((DUMMY_USER, -1))
                 continue
 
-            best_user.allocate_bits(bits_to_allocate, curr_tick, self.algorithm)
+            best_user, snr = self.select_user(selected_users, curr_tick)
+            bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
 
-            # print(f"SIZE: {reduce(lambda acc, u: acc + u.buffer.current_size, selected_users, 0)}, SNR: {snr}")
-            if best_user.buffer.current_size <= 0:
+            if (self.algorithm == "CEI"):
+                # This can relay to user who doesn't need it
+                effective_bits = snr * (1 - best_user.relay_ratio) * constant.BITS_PER_SNR_POINT
+                relayed_bits = snr * best_user.relay_ratio * constant.BITS_PER_SNR_POINT
+                best_user.allocate_bits(effective_bits,curr_tick, self.algorithm)
+                best_user.linked_user.allocate_bits(relayed_bits, curr_tick, self.algorithm)
+                scheduled.append((best_user, effective_bits))
+                scheduled.append((best_user.linked_user, relayed_bits))
+            else:
+                best_user.allocate_bits(bits_to_allocate, curr_tick, self.algorithm)
+                scheduled.append((best_user, bits_to_allocate))
+
+            # Remove users if they don't have any more bits
+            if best_user.buffer.current_size < 1:
                 selected_users.remove(best_user)
-
+            
+            if best_user.linked_user in selected_users and best_user.linked_user.buffer.current_size <= 0:
+                selected_users.remove(best_user.linked_user)
+            
         return scheduled
 
     def apply_repartition(
