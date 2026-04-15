@@ -13,6 +13,7 @@ class User:
         self.avgSNR = avgSNR
         self.relay_ratio = relay_ratio
         self.pdor: float = 0
+        self.linked_user: User
 
     def _add_packet(self, packet: Packet) -> None:
         self.buffer.push(packet)
@@ -24,7 +25,7 @@ class User:
     def allocate_bits(self, bits: int, curr_tick: int, algo: str) -> None:
         transmitted, _, _ = self.buffer.pop(bits, curr_tick)
         record_bits(
-            transmitted if algo != "CEI" else transmitted // (1 - self.relay_ratio),
+            transmitted,
             self.avgSNR,
         )
 
