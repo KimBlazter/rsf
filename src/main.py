@@ -73,13 +73,27 @@ def main(
             ur_pct_by_user = [r[1] for r in results if r is not None]
             delai_proche_by_user = [r[2] for r in results if r is not None]
             delai_loin_by_user = [r[3] for r in results if r is not None]
-            generate_final_plot(
-                bits_ur_by_user,
-                ur_pct_by_user,
-                delai_proche_by_user,
-                delai_loin_by_user,
-                algo,
-            )
+
+            if algo == "CEI":
+                generate_final_plot(
+                    bits_ur_by_user,
+                    ur_pct_by_user,
+                    delai_proche_by_user,
+                    delai_loin_by_user,
+                    algo,
+                    cei_delai_pl=[r[4] for r in results if r is not None],
+                    cei_delai_ph=[r[5] for r in results if r is not None],
+                    cei_delai_ll=[r[6] for r in results if r is not None],
+                    cei_delai_lh=[r[7] for r in results if r is not None],
+                )
+            else:
+                generate_final_plot(
+                    bits_ur_by_user,
+                    ur_pct_by_user,
+                    delai_proche_by_user,
+                    delai_loin_by_user,
+                    algo,
+                )
         if len(algorithms) > 1:
             generate_combined_plot(results_by_algo)
 
@@ -117,7 +131,7 @@ def simulate(
             users, tick
         )  # Donner les UR aux users
 
-        # compute number of unsued UR 
+        # compute number of unsued UR
         miss = sum(1 for user, bits in updates if user is DUMMY_USER or bits == -1)
         # print(f"dummmy : {DUMMY_USER}")
         # print(f"list: {updates}")
@@ -126,7 +140,7 @@ def simulate(
         _ = record_ur_usage(len(updates) - miss, len(updates))
 
         # record delay
-        _ = process_delay(users, tick)
+        _ = process_delay(users, tick, algorithm)
 
         tick += 1
     end = perf_counter() if measure_time else 0
@@ -136,7 +150,7 @@ def simulate(
         print(f"\tSimulation #{sim_id} successfully ended !")
 
     _ = generate_plots(sim_id, algorithm)
-    return finalise_round(nb_users)
+    return finalise_round(nb_users, algorithm)
 
 
 if __name__ == "__main__":

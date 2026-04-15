@@ -2,7 +2,6 @@ import sys
 
 from buffer import Buffer
 from constant import PDOR_THRESHOLD, PDOR_TICK_INTERVAL
-from mesures import record_bits
 from packet import Packet
 
 
