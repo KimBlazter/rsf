@@ -24,10 +24,6 @@ class User:
 
     def allocate_bits(self, bits: int, curr_tick: int, algo: str) -> None:
         transmitted, _, _ = self.buffer.pop(bits, curr_tick)
-        record_bits(
-            transmitted,
-            self.avgSNR,
-        )
 
     def get_pdor(self, tick: int) -> float:
         """Get current PDOR

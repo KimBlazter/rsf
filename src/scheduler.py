@@ -2,6 +2,7 @@ from functools import reduce
 
 import constant
 from algorithms import algos
+from mesures import record_bits
 from user import DUMMY_USER, User
 
 
@@ -52,6 +53,11 @@ class Scheduler:
 
             best_user, snr = self.select_user(selected_users, curr_tick)
             bits_to_allocate = snr * constant.BITS_PER_SNR_POINT
+
+            record_bits(
+                bits_to_allocate, # record potential bits, not usefull ones (full buffer)  
+                best_user.avgSNR,
+            )
 
             if (self.algorithm == "CEI"):
                 # This can relay to user who doesn't need it
