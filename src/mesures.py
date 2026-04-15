@@ -31,6 +31,8 @@ COLORS = {
     "CEI-loin": "#3f6212",
     "WFO": "#dc2626",
     "WFO-loin": "#7f1d1d",
+    "PF": "#eab308",
+    "PF-loin": "#a16207",
 }
 
 # # Mesures à prendre
@@ -171,22 +173,22 @@ def generate_plots(sim_id: int, algorithm: str) -> None:
 
     # %UR utilisées par tick
     plt.figure()
-    plt.plot(_ur_pct, color="green")
+    plt.plot(_ur_pct, color=COLORS[algorithm])
     plt.xlabel("Tick")
     plt.ylabel("% d'UR utilisées")
     plt.title(f"Taux d'utilisation des UR par tick ({algorithm})")
-    plt.savefig(f"{output_dir}/ur_usage.png")
+    plt.savefig(f"{output_dir}/ur_usage.png", bbox_inches="tight")
     plt.close()
 
     # Délai par paquet (proche vs loin)
     plt.figure()
-    plt.plot(_delais_proche, label="Proche", alpha=0.7, color="green")
-    plt.plot(_delais_loin, label="Loin", alpha=0.7, color="red")
+    plt.plot(_delais_proche, label="Proche", alpha=0.7, color=COLORS[algorithm])
+    plt.plot(_delais_loin, label="Loin", alpha=0.7, color=COLORS[f"{algorithm}-loin"])
     plt.xlabel("Temps (Tick)")
     plt.ylabel("Délai moyen (par user)")
     plt.title(f"Délai moyen par tick ({algorithm})")
-    plt.legend()
-    plt.savefig(f"{output_dir}/delai.png")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.savefig(f"{output_dir}/delai.png", bbox_inches="tight")
     plt.close()
 
     # CDF des bits par UR (proche vs loin)
@@ -194,16 +196,28 @@ def generate_plots(sim_id: int, algorithm: str) -> None:
     if _bits_proche:
         sorted_proche = np.sort(_bits_proche)
         cdf_proche = np.arange(1, len(sorted_proche) + 1) / len(sorted_proche)
-        plt.plot(sorted_proche, cdf_proche, label="Proche", alpha=0.7, color="green")
+        plt.plot(
+            sorted_proche,
+            cdf_proche,
+            label="Proche",
+            alpha=0.7,
+            color=COLORS[algorithm],
+        )
     if _bits_loin:
         sorted_loin = np.sort(_bits_loin)
         cdf_loin = np.arange(1, len(sorted_loin) + 1) / len(sorted_loin)
-        plt.plot(sorted_loin, cdf_loin, label="Loin", alpha=0.7, color="red")
+        plt.plot(
+            sorted_loin,
+            cdf_loin,
+            label="Loin",
+            alpha=0.7,
+            color=COLORS[f"{algorithm}-loin"],
+        )
     plt.xlabel("Bits par UR")
     plt.ylabel("CDF")
     plt.title(f"CDF des bits par UR ({algorithm})")
-    plt.legend()
-    plt.savefig(f"{output_dir}/bits_par_ur.png")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.savefig(f"{output_dir}/bits_par_ur.png", bbox_inches="tight")
     plt.close()
 
     print("Graphiques sauvegardés dans", output_dir)
@@ -228,22 +242,22 @@ def generate_final_plot(
     bits_per_ur = [entry[0] for entry in bits_ur_by_user]
 
     plt.figure()
-    plt.plot(nb_users, bits_per_ur, marker="o", color="blue")
+    plt.plot(nb_users, bits_per_ur, marker="o", color=COLORS[algorithm])
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Bits/UR moyen")
     plt.title(f"Bits par UR en fonction du nombre d'utilisateurs{label}")
-    plt.savefig(f"{output_dir}/bits_ur_by_user.png")
+    plt.savefig(f"{output_dir}/bits_ur_by_user.png", bbox_inches="tight")
     plt.close()
 
     nb_users = [entry[1] for entry in ur_pct_by_user]
     avg_ur_usage = [entry[0] for entry in ur_pct_by_user]
 
     plt.figure()
-    plt.plot(nb_users, avg_ur_usage, marker="o", color="blue")
+    plt.plot(nb_users, avg_ur_usage, marker="o", color=COLORS[algorithm])
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Pourcentage d'UR utilisées")
     plt.title(f"Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs{label}")
-    plt.savefig(f"{output_dir}/ur_usage_by_user.png")
+    plt.savefig(f"{output_dir}/ur_usage_by_user.png", bbox_inches="tight")
     plt.close()
 
     # Délai moyen par nombre d'utilisateurs (proche vs loin)
@@ -254,13 +268,25 @@ def generate_final_plot(
     delai_loin = [entry[0] for entry in delai_loin_by_user]
 
     plt.figure()
-    plt.plot(nb_users_proche, delai_proche, marker="o", label="Proche", color="green")
-    plt.plot(nb_users_loin, delai_loin, marker="o", label="Loin", color="red")
+    plt.plot(
+        nb_users_proche,
+        delai_proche,
+        marker="o",
+        label="Proche",
+        color=COLORS[algorithm],
+    )
+    plt.plot(
+        nb_users_loin,
+        delai_loin,
+        marker="o",
+        label="Loin",
+        color=COLORS[f"{algorithm}-loin"],
+    )
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Délai moyen")
     plt.title(f"Délai moyen en fonction du nombre d'utilisateurs{label}")
-    plt.legend()
-    plt.savefig(f"{output_dir}/delai_by_user.png")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.savefig(f"{output_dir}/delai_by_user.png", bbox_inches="tight")
     plt.close()
 
     print(f"Graphiques finaux sauvegardés dans {output_dir}/")
@@ -290,8 +316,8 @@ def generate_combined_plot(
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Bits/UR moyen")
     plt.title("Bits par UR en fonction du nombre d'utilisateurs")
-    plt.legend()
-    plt.savefig(f"{OUTPUT_DIR}/bits_ur_by_user.png")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.savefig(f"{OUTPUT_DIR}/bits_ur_by_user.png", bbox_inches="tight")
     plt.close()
 
     # %UR utilisées par nombre d'utilisateurs
@@ -303,8 +329,8 @@ def generate_combined_plot(
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Pourcentage d'UR utilisées")
     plt.title("Pourcentage d'UR utilisées en fonction du nombre d'utilisateurs")
-    plt.legend()
-    plt.savefig(f"{OUTPUT_DIR}/ur_usage_by_user.png")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.savefig(f"{OUTPUT_DIR}/ur_usage_by_user.png", bbox_inches="tight")
     plt.close()
 
     # Délai moyen par nombre d'utilisateurs (proche vs loin)
@@ -330,8 +356,8 @@ def generate_combined_plot(
     plt.xlabel("Nombre d'utilisateurs")
     plt.ylabel("Délai moyen")
     plt.title("Délai moyen en fonction du nombre d'utilisateurs")
-    plt.legend()
-    plt.savefig(f"{OUTPUT_DIR}/delai_by_user.png")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.savefig(f"{OUTPUT_DIR}/delai_by_user.png", bbox_inches="tight")
     plt.close()
 
     print(f"Graphiques comparatifs sauvegardés dans {OUTPUT_DIR}/")
