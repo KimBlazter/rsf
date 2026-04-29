@@ -37,13 +37,14 @@ class Scheduler:
 
         Args:
             users: List of active users eligible for scheduling.
+            curr_tick: Value of the current tick
 
         Returns:
             List of tuples containing:
                 - The selected user.
                 - The number of allocated bits.
         """
-        selected_users = [u for u in users if u.buffer.current_size > 0]
+        selected_users = [u for u in users if u.buffer.current_size > 0 and u.avgSNR != 0]
         scheduled = []
 
         for _ in range(self.MAX_UR):
@@ -61,21 +62,18 @@ class Scheduler:
                 self.algorithm,
             )
 
-            if self.algorithm == "CEI":
-                # This can relay to user who doesn't need it
-                effective_bits = (
-                    snr * (1 - best_user.relay_ratio) * constant.BITS_PER_SNR_POINT
-                )
-                relayed_bits = snr * best_user.relay_ratio * constant.BITS_PER_SNR_POINT
-                best_user.allocate_bits(effective_bits, curr_tick, self.algorithm)
-                best_user.linked_user.allocate_bits(
-                    relayed_bits, curr_tick, self.algorithm
-                )
-                scheduled.append((best_user, effective_bits))
-                scheduled.append((best_user.linked_user, relayed_bits))
-            else:
-                best_user.allocate_bits(bits_to_allocate, curr_tick, self.algorithm)
-                scheduled.append((best_user, bits_to_allocate))
+            
+            # This can relay to user who doesn't need it
+            effective_bits = (
+                snr * (1 - best_user.relay_ratio) * constant.BITS_PER_SNR_POINT
+            )
+            relayed_bits = snr * best_user.relay_ratio * constant.BITS_PER_SNR_POINT
+            best_user.allocate_bits(effective_bits, curr_tick, self.algorithm)
+            best_user.linked_user.allocate_bits(
+                relayed_bits, curr_tick, self.algorithm
+            )
+            scheduled.append((best_user, effective_bits))
+            scheduled.append((best_user.linked_user, relayed_bits))
 
             # Remove users if they don't have any more bits
             if best_user.buffer.current_size < 1:
@@ -99,6 +97,7 @@ class Scheduler:
         Args:
             repartition: List of tuples containing users and their
                         corresponding allocated bits.
+            curr_tick: Value of the current tick.
         """
         # self.print_loin_users_allocation(repartition) # REMOVE
         miss = 0
@@ -116,6 +115,7 @@ class Scheduler:
 
         Args:
             users: List of active users eligible for scheduling.
+            tick: Value of the current tick.
 
         Returns:
             A tuple containing:
@@ -125,6 +125,6 @@ class Scheduler:
         Raises:
             Exception: If the configured algorithm is unknown.
         """
-        if algos.get(self.algorithm) == None:
+        if algos.get(self.algorithm) is None:
             raise Exception("Unknown algorithm")
         return algos.get(self.algorithm)(users, tick)  # pyright: ignore[reportOptionalCall]
