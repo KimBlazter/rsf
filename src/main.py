@@ -2,7 +2,6 @@ import argparse
 import concurrent.futures
 import os
 import shutil
-from functools import reduce
 from time import perf_counter
 
 from argparser import (
