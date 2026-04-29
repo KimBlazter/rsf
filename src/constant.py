@@ -2,7 +2,7 @@ PROCHE_AVG_SNR = 10  # SNR for close users
 LOIN_AVG_SNR = 7  # SNR for far users
 
 LOW_RELAY_RATIO = 0.1
-HIGH_RELAY_RATIO = 0.8
+HIGH_RELAY_RATIO = 0.5 # Don't go beyond 0.5
 
 PDOR_THRESHOLD = 50
 PDOR_TICK_INTERVAL = 10  # how often we update PDOR, in ticks
